@@ -1,8 +1,9 @@
 #include <Wire.h>
-//#include <TLC59116_Unmanaged.h>
+#include <TLC59116_Unmanaged.h>
 #include <TLC59116.h>
 #include <Adafruit_ADS1015.h>
 #include <Adafruit_MCP23017.h>
+#include <Joystick.h>
 
 //misc defines
 #define i2c_speed 100000 //increase later after testing
@@ -44,6 +45,17 @@ Adafruit_MCP23017 ioex_overhead2;
 
 TLC59116Manager tlcmanager(Wire, i2c_speed);
 
+//init joystick
+Joystick_ joystick(JOYSTICK_DEFAULT_REPORT_ID,JOYSTICK_TYPE_JOYSTICK,
+  70, 2,              //button count, hat switch count
+  true,true,false,    //X(roll), Y(pitch), Z
+  true,true,true,  //Rx(dimmer), Ry(gtn1 vol), Rz(gtn2 vol)
+  true,true,          //rudder(a/t), throttle(throttle)
+  true,true,false  //accelerator(collective), brake(rotor brake), steering
+  );
+
+const int temp_time = 100; //time ot momentarily activate toggle switch outputs for
+
 void setup() {
   //anex setup
   anex_cyclic.begin();
@@ -68,6 +80,54 @@ void setup() {
 
 }
 
+//takes in an array of the four hat switch states (up, right, down, left) already inverted so 1 = engaged
+//outputs the degrees that the joystick library expects for the hat position
+int hat_read(int input_array) {
+  int output_array[4] = {
+    input_array[0],
+    input_array[1] * 2,
+    input_array[2] * 4,
+    input_array[3] * 8
+  };
+
+  int mask = B0000;
+  for (int i = 0; i < 4; i++) {
+    mask = output_array[i] | mask;
+  }
+
+  switch (mask) {
+    case B0000:
+      return -1;
+      break;
+    case B0001:
+      return 0;
+      break;
+    case B0011:
+      return 45;
+      break;
+    case B0010:
+      return 90;
+      break;
+    case B0110:
+      return 135;
+      break;
+    case B0100:
+      return 180;
+      break;
+    case B1100:
+      return 225;
+      break;
+    case B1000:
+      return 270;
+      break;
+    case B1001:
+      return 315;
+      break;
+    default:
+      return -1;
+  }
+}
+
 void test_mode() {
   //plan is to get highest digital input pin number (based on wire numbering diagram) and output that
   //pin number, in binary, to the annunciator; lights will be lit up in order to represent that pin
@@ -78,8 +138,8 @@ void test_mode() {
   //engage this mode. 
 
   //declare analog inputs
-  static int cylic_pitch;
-  static int cylic_roll;
+  static int cyclic_pitch;
+  static int cyclic_roll;
   static int collective;
   static int throttle;
   static int antitorque;
@@ -162,13 +222,13 @@ void test_mode() {
   static TLC59116 &ledd_panel_3 = tlcmanager[5];
   
   //blink the RPM low light to indicate that we're in test mode
-  ledd_panel_3.group_blink(3,1,128)
+  ledd_panel_3.group_blink(3,1,128);
 
   //set first 8 lights to represent highest input in binary
   ledd_panel_1.on_pattern(highest_input<<8).off_pattern(~highest_input<<8);
   
   //set second 8 lights to reflect pwm values of analog axes
-  int pwm_values_a[] = {
+  int pwm_values_a[8] = {
     map(cyclic_pitch,-2048,2048,0,256),
     map(cyclic_roll,-2048,2048,0,256),
     map(collective,-2048,2048,0,256),
@@ -177,11 +237,11 @@ void test_mode() {
     map(gtn1_vol,-2048,2048,0,256),
     map(gtn2_vol,-2048,2048,0,256),
     map(instrument_dimmer,-2048,2048,0,256)
-  }
+  };
   //set following 1 light for remaining axis
-  int pwm_values_b[] = {
+  int pwm_values_b[1] = {
     map(rotor_brake,-2048,2048,0,256)
-  }
+  };
   ledd_panel_1.set_outputs(8,15,pwm_values_a);
   ledd_panel_1.set_outputs(0,0,pwn_values_b);
 }
@@ -192,6 +252,33 @@ void safe_mode() {
   //almost any circumstances and then perform any other needed functions from inside the sim.
   //To indicate that we are in safe mode, the FADEC fail light will blink and all other annunciations
   //will be extinguished.
+
+  //initialize
+  static int cyclic_pitch;
+  static int cyclic_roll;
+  static int collective;
+  static int throttle;
+  static int antitorque;
+
+  //read
+  cyclic_pitch =  anex_cyclic.readADC_SingleEnded(0);
+  cyclic_roll =  anex_cyclic.readADC_SingleEnded(1);
+  collective =  anex_collective.readADC_SingleEnded(0);
+  throttle =  anex_collective.readADC_SingleEnded(1);
+  antitorque =  anex_panel.readADC_SingleEnded(0);
+  
+  //output
+  joystick.setYAxis(cyclic_pitch);
+  joystick.setXAxis(cyclic_roll);
+  joystick.setRudder(antitorque);
+  joystick.setThrottle(throttle);
+  joystick.setAccelerator(collective);
+
+  //blink fadec
+  static TLC59116 &ledd_panel_2 = tlcmanager[4];
+  //blink the FADEC Fail light to indicate that we're in safe mode
+  ledd_panel_2.group_blink(2,1,128);
+
 }
 
 void loop() {
