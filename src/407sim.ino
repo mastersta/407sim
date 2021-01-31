@@ -276,8 +276,9 @@ void safe_mode() {
 
   //blink fadec
   static TLC59116 &ledd_panel_2 = tlcmanager[4];
-  //blink the FADEC Fail light to indicate that we're in safe mode
+  //blink the FADEC Fail and FADEC Degraded lights to indicate that we're in safe mode
   ledd_panel_2.group_blink(2,1,128);
+  ledd_panel_2.group_blink(3,1,128);
 
 }
 
