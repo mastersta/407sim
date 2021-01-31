@@ -72,8 +72,7 @@ void test_mode() {
   //plan is to get highest digital input pin number (based on wire numbering diagram) and output that
   //pin number, in binary, to the annunciator; lights will be lit up in order to represent that pin
   //number. Total of pins shouldn't exceed 255 so 8 lights should accurately represent it.
-  //after that, use the next set of lights to represent the positive or negative value of each analog
-  //input. Light on = positive.
+  //after that, use the next set of lights to represent the analog input value of the axis
   //all of this should allow the testing of all digital and analog inputs without even a connection
   //to a pc. A hardware switch, directly connected to a pin on the arduino, may be implemented to
   //engage this mode. 
@@ -84,6 +83,8 @@ void test_mode() {
   static int collective;
   static int throttle;
   static int antitorque;
+  static int gtn1_vol;
+  static int gtn2_vol;
   static int instrument_dimmer;
   static int rotor_brake;
 
@@ -105,6 +106,8 @@ void test_mode() {
   collective =  anex_collective.readADC_SingleEnded(0);
   throttle =  anex_collective.readADC_SingleEnded(1);
   antitorque =  anex_panel.readADC_SingleEnded(0);
+  gtn1_vol = anex_panel.readADC_SingleEnded(1);
+  gtn2_vol = anex_panel.readADC_SingleEnded(2);
   instrument_dimmer = anex_overhead.readADC_SingleEnded(0);
   rotor_brake =  anex_overhead.readADC_SingleEnded(1);
 
@@ -166,26 +169,21 @@ void test_mode() {
   
   //set second 8 lights to reflect pwm values of analog axes
   int pwm_values_a[] = {
-    cyclic_pitch,
-    (-1 * cyclic_pitch),
-    cyclic_roll,
-    (-1 * cyclic_roll),
-    collective,
-    (-1 * collective),
-    throttle,
-    (-1 * throttle),
+    map(cyclic_pitch,-2048,2048,0,256),
+    map(cyclic_roll,-2048,2048,0,256),
+    map(collective,-2048,2048,0,256),
+    map(throttle,-2048,2048,0,256),
+    map(antitorque,-2048,2048,0,256),
+    map(gtn1_vol,-2048,2048,0,256),
+    map(gtn2_vol,-2048,2048,0,256),
+    map(instrument_dimmer,-2048,2048,0,256)
   }
-  //set following 6 lights for remaining axes
+  //set following 1 light for remaining axis
   int pwm_values_b[] = {
-    antitorque,
-    (-1 * antitorque),
-    instrument_dimmer,
-    (-1 * instrument_dimmer),
-    rotor_brake,
-    (-1 * rotor_brake)
+    map(rotor_brake,-2048,2048,0,256)
   }
-  ledd_panel_1.set_outputs(8,14,pwm_values_a);
-  ledd_panel_1.set_outputs(0,7,pwn_values_b);
+  ledd_panel_1.set_outputs(8,15,pwm_values_a);
+  ledd_panel_1.set_outputs(0,0,pwn_values_b);
 }
 
 void safe_mode() {
