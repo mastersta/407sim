@@ -54,7 +54,61 @@ Joystick_ joystick(JOYSTICK_DEFAULT_REPORT_ID,JOYSTICK_TYPE_JOYSTICK,
   true,true,false  //accelerator(collective), brake(rotor brake), steering
   );
 
-const int temp_time = 100; //time ot momentarily activate toggle switch outputs for
+//all of the inputs that correspond to momentary buttons
+byte mom_ioex_cyclic[] {0,1,2,3,4,9};
+byte mom_ioex_collective[] {0,1,4,9};
+byte mom_ioex_panel1[] {1,2,3,4,5,6,7,14,15};
+byte mom_ioex_panel2[] {16,17,18,19};
+byte mom_ioex_panel3[] {};
+byte mom_ioex_overhead1[] {2};
+byte mom_ioex_overhead2[] {}; //no momentaries on overhead 2
+byte mom_ioex_overhead3[] {}; //no momentaries on overhead 3
+const byte momentary_button_numbers[] {
+  mom_ioex_cyclic,
+  mom_ioex_collective,
+  mom_ioex_panel1,
+  mom_ioex_panel2,
+  mom_ioex_overhead1,
+  mom_ioex_overhead2,
+  mom_ioex_overhead3
+};
+
+//all of the inputs that correspond to toggle switch positions
+byte tog_ioex_cyclic[] {};    //no switches on cyclic
+byte tog_ioex_collective[] {2,3};
+byte tog_ioex_panel1[] {0};
+byte tog_ioex_panel2[] {};    //no switches on panel 2
+byte tog_ioex_panel3[] {};
+byte tog_ioex_overhead1[] {0,1,3,4,5,6,7,8,9,10,11,12,13,14,15};
+byte tog_ioex_overhead2[] {0,1,2,3,4,5,6,7,8,9}; //ends with switches, CBs not implemented
+byte tog_ioex_overhead3[] {}; //CBs not implemented
+const byte toggle_switch_numbers[] {
+  tog_ioex_cyclic,
+  tog_ioex_collective,
+  tog_ioex_panel1,
+  tog_ioex_panel2,
+  tog_ioex_overhead1,
+  tog_ioex_overhead2,
+  tog_ioex_overhead3
+};
+
+//all of the inputs that correspond to encoders, pin + 1 is implied as other phase
+byte enc_ioex_cyclic[] {};     //no encoders on cyclic
+byte enc_ioex_collective[] {}; //no encoders on collective
+byte enc_ioex_panel1[] {8,10,12};
+byte enc_ioex_panel2[] {8,10};
+byte enc_ioex_overhead1[] {};  //no encoders on overhead 1
+byte enc_ioex_overhead2[] {};  //no encoders on overhead 2
+byte enc_ioex_overhead3[] {};  //no encoders on overhead 2
+const byte encoder_numbers[] {
+  enc_ioex_cyclic,
+  enc_ioex_collective,
+  enc_ioex_panel1,
+  enc_ioex_panel2,
+  enc_ioex_overhead1,
+  enc_ioex_overhead2
+};
+
 
 void setup() {
   //anex setup
@@ -82,7 +136,7 @@ void setup() {
 
 //takes in an array of the four hat switch states (up, right, down, left) already inverted so 1 = engaged
 //outputs the degrees that the joystick library expects for the hat position
-int hat_read(int input_array) {
+int hat_direction(int input_array) {
   int output_array[4] = {
     input_array[0],
     input_array[1] * 2,
@@ -286,4 +340,59 @@ void loop() {
   //standard operations consisting of reading all analog and digital inputs, and sending them to the
   //sim as a joystick; followed by reading the air manager message port and using that data to
   //properly light up the annunciator
+
+  //analog inputs - output values directly to sim
+  //read
+  cyclic_pitch =  anex_cyclic.readADC_SingleEnded(0);
+  cyclic_roll =  anex_cyclic.readADC_SingleEnded(1);
+  collective =  anex_collective.readADC_SingleEnded(0);
+  throttle =  anex_collective.readADC_SingleEnded(1);
+  antitorque =  anex_panel.readADC_SingleEnded(0);
+  
+  //output
+  joystick.setYAxis(cyclic_pitch);
+  joystick.setXAxis(cyclic_roll);
+  joystick.setRudder(antitorque);
+  joystick.setThrottle(throttle);
+  joystick.setAccelerator(collective);
+
+  //read all digital inputs now
+  //declare digital inputs
+  static unsigned int cyclic_inputs;
+  static unsigned int collective_inputs;
+  static unsigned int panel_inputs_a;
+  static unsigned int panel_inputs_b;
+  static unsigned int overhead_inputs_a;
+  static unsigned int overhead_inputs_b;
+
+  //read all digitals
+  cyclic_inputs = ~ioex_cyclic.readGPIOAB();
+  collective_inputs = ~ioex_collective.readGPIOAB();
+  panel_inputs_a = ~ioex_panel1.readGPIOAB();
+  panel_inputs_b = ~ioex_panel2.readGPIOAB();
+  overhead_inputs_a = ~ioex_overhead1.readGPIOAB();
+  overhead_inputs_b = ~ioex_overhead2.readGPIOAB();
+
+  //hat switches - see hat switch function
+  static int cyclic_hat_array[4] {
+    bitRead(cyclic_inputs, 5), //up
+    bitRead(cyclic_inputs, 6), //right
+    bitRead(cyclic_inputs, 8), //down
+    bitRead(cyclic_inputs, 7), //left
+  }
+  joystick.setHatSwitch(0, hat_direction(cyclic_hat_array));
+
+  static int collective_hat_array[4] {
+    bitRead(collective_inputs, 5), //up
+    bitRead(collective_inputs, 6), //right
+    bitRead(collective_inputs, 8), //down
+    bitRead(collective_inputs, 7), //left
+  }
+  joystick.setHatSwitch(1, hat_direction(collective_hat_array));
+
+  //momentary push buttons - on as long as the input is recieved
+  
+
+  //toggle switches - virtual button is pressed for specified time, but only on state change
+
 }
