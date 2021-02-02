@@ -19,8 +19,10 @@
 #define addr_ioex_collective 0x21
 #define addr_ioex_panel1 0x22
 #define addr_ioex_panel2 0x23
-#define addr_ioex_overhead1 0x24
-#define addr_ioex_overhead2 0x25
+#define addr_ioex_panel3 0x24
+#define addr_ioex_overhead1 0x25
+#define addr_ioex_overhead2 0x26
+#define addr_ioex_overhead3 0x27
 #define addr_ioex_offset 0x20
 
 //ledd = TLC59017 led driver
@@ -40,8 +42,10 @@ Adafruit_MCP23017 ioex_cyclic;
 Adafruit_MCP23017 ioex_collective;
 Adafruit_MCP23017 ioex_panel1;
 Adafruit_MCP23017 ioex_panel2;
+Adafruit_MCP23017 ioex_panel3;
 Adafruit_MCP23017 ioex_overhead1;
 Adafruit_MCP23017 ioex_overhead2;
+Adafruit_MCP23017 ioex_overhead3;
 
 TLC59116Manager tlcmanager(Wire, i2c_speed);
 
@@ -54,61 +58,26 @@ Joystick_ joystick(JOYSTICK_DEFAULT_REPORT_ID,JOYSTICK_TYPE_JOYSTICK,
   true,true,false  //accelerator(collective), brake(rotor brake), steering
   );
 
-//all of the inputs that correspond to momentary buttons
-byte mom_ioex_cyclic[] {0,1,2,3,4,9};
-byte mom_ioex_collective[] {0,1,4,9};
-byte mom_ioex_panel1[] {1,2,3,4,5,6,7,14,15};
-byte mom_ioex_panel2[] {16,17,18,19};
-byte mom_ioex_panel3[] {};
-byte mom_ioex_overhead1[] {2};
-byte mom_ioex_overhead2[] {}; //no momentaries on overhead 2
-byte mom_ioex_overhead3[] {}; //no momentaries on overhead 3
-const byte momentary_button_numbers[] {
-  mom_ioex_cyclic,
-  mom_ioex_collective,
-  mom_ioex_panel1,
-  mom_ioex_panel2,
-  mom_ioex_overhead1,
-  mom_ioex_overhead2,
-  mom_ioex_overhead3
+//type of input for every pin on each ioex
+//0 for unused/NYI, 1 for momentary, 2 for toggle, 3 for encoder phase A, 4 for encoder phase B.
+//Hats are handled elsewhere, so they get a 0
+byte type_ioex_cyclic[]     {1,1,1,1,1,0,0,0,0,1,0,0,0,0,0,0};
+byte type_ioex_collective[] {1,1,2,2,1,0,0,0,0,1,0,0,0,0,0,0};
+byte type_ioex_panel1[]     {2,1,1,1,1,1,1,1,3,4,3,4,3,4,1,1};
+byte type_ioex_panel2[]     {1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0};
+byte type_ioex_panel3[]     {1,1,1,3,4,3,4,1,1,1,1,3,4,3,4,1};
+byte type_ioex_overhead1[]  {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2};
+byte type_ioex_overhead2[]  {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2};
+byte type_ioex_overhead3[]  {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2};
+const byte button_types[] {
+  type_ioex_cyclic,
+  type_ioex_collective,
+  type_ioex_panel1,
+  type_ioex_panel2,
+  type_ioex_overhead1,
+  type_ioex_overhead2,
+  type_ioex_overhead3
 };
-
-//all of the inputs that correspond to toggle switch positions
-byte tog_ioex_cyclic[] {};    //no switches on cyclic
-byte tog_ioex_collective[] {2,3};
-byte tog_ioex_panel1[] {0};
-byte tog_ioex_panel2[] {};    //no switches on panel 2
-byte tog_ioex_panel3[] {};
-byte tog_ioex_overhead1[] {0,1,3,4,5,6,7,8,9,10,11,12,13,14,15};
-byte tog_ioex_overhead2[] {0,1,2,3,4,5,6,7,8,9}; //ends with switches, CBs not implemented
-byte tog_ioex_overhead3[] {}; //CBs not implemented
-const byte toggle_switch_numbers[] {
-  tog_ioex_cyclic,
-  tog_ioex_collective,
-  tog_ioex_panel1,
-  tog_ioex_panel2,
-  tog_ioex_overhead1,
-  tog_ioex_overhead2,
-  tog_ioex_overhead3
-};
-
-//all of the inputs that correspond to encoders, pin + 1 is implied as other phase
-byte enc_ioex_cyclic[] {};     //no encoders on cyclic
-byte enc_ioex_collective[] {}; //no encoders on collective
-byte enc_ioex_panel1[] {8,10,12};
-byte enc_ioex_panel2[] {8,10};
-byte enc_ioex_overhead1[] {};  //no encoders on overhead 1
-byte enc_ioex_overhead2[] {};  //no encoders on overhead 2
-byte enc_ioex_overhead3[] {};  //no encoders on overhead 2
-const byte encoder_numbers[] {
-  enc_ioex_cyclic,
-  enc_ioex_collective,
-  enc_ioex_panel1,
-  enc_ioex_panel2,
-  enc_ioex_overhead1,
-  enc_ioex_overhead2
-};
-
 
 void setup() {
   //anex setup
@@ -224,6 +193,9 @@ void test_mode() {
   gtn2_vol = anex_panel.readADC_SingleEnded(2);
   instrument_dimmer = anex_overhead.readADC_SingleEnded(0);
   rotor_brake =  anex_overhead.readADC_SingleEnded(1);
+
+  //TODO: redo this section to include third panel and overhead ioex's, and to follow the naming
+  //standards from the main loop
 
   //read all digitals
   cyclic_inputs = ~ioex_cyclic.readGPIOAB();
@@ -368,10 +340,24 @@ void loop() {
   //read all digitals
   cyclic_inputs = ~ioex_cyclic.readGPIOAB();
   collective_inputs = ~ioex_collective.readGPIOAB();
-  panel_inputs_a = ~ioex_panel1.readGPIOAB();
-  panel_inputs_b = ~ioex_panel2.readGPIOAB();
-  overhead_inputs_a = ~ioex_overhead1.readGPIOAB();
-  overhead_inputs_b = ~ioex_overhead2.readGPIOAB();
+  panel_inputs1 = ~ioex_panel1.readGPIOAB();
+  panel_inputs2 = ~ioex_panel2.readGPIOAB();
+  panel_inputs3 = ~ioex_panel3.readGPIOAB();
+  overhead_inputs1 = ~ioex_overhead1.readGPIOAB();
+  overhead_inputs2 = ~ioex_overhead2.readGPIOAB();
+  overhead_inputs3 = ~ioex_overhead3.readGPIOAB();
+
+  //place into array for easy access
+  unsigned int inputs_array[8] {
+    cyclic_inputs,
+    collective_input,
+    panel_inputs1,
+    panel_inputs2,
+    panel_inputs3,
+    overhead_inputs1,
+    overhead_inputs2,
+    overhead_inputs3
+  }
 
   //hat switches - see hat switch function
   static int cyclic_hat_array[4] {
@@ -390,9 +376,34 @@ void loop() {
   }
   joystick.setHatSwitch(1, hat_direction(collective_hat_array));
 
-  //momentary push buttons - on as long as the input is recieved
-  
 
-  //toggle switches - virtual button is pressed for specified time, but only on state change
+  //loops through all the inputs, checks the type of input, and applies the correct action
 
-}
+  //loop through each ioex first
+  for (int i = 0; i < 6; i++) {
+
+    //and then through each input in the ioex
+    for (int j = 0; j < 16; j++) {
+
+      //check type
+      if button_types[i][j] = 1 { //momentary
+        //set button (number) based on what got read earlier
+        Joystick.setButton((i*j), bitRead(inputs_array[i], j);
+
+      } else if button_types[i][j] = 2 { //toggle
+      //TODO
+        //need to store release time for each toggle and press state
+        //check if current time is past the release time
+          //if it is past and the state is false and the switch is active, we're in a new press event, so:
+            //send a press, set a new release time, and set state true
+          //if it is and the state is true, we're ready to release, so:
+            //send release   (check state first to help with short circuiting)
+          //if not and state is true, we're still waiting for release time so:
+            //do nothing
+            
+      } else if button_types[i][j] = 3 { //encoder
+        //TODO
+      };
+    }
+    //TODO: something about checking if we're running fast enough, and displaying a warning if not
+  }
