@@ -15,15 +15,14 @@
 #define addr_anex_overhead 0x4B
 
 //ioex = MCP23017 digital I/O expander
-#define addr_ioex_cyclic 0x20
-#define addr_ioex_collective 0x21
-#define addr_ioex_panel1 0x22
-#define addr_ioex_panel2 0x23
-#define addr_ioex_panel3 0x24
-#define addr_ioex_overhead1 0x25
-#define addr_ioex_overhead2 0x26
-#define addr_ioex_overhead3 0x27
-#define addr_ioex_offset 0x20
+#define addr_ioex_cyclic 0     //0x20
+#define addr_ioex_collective 1 //0x21
+#define addr_ioex_panel1 2     //0x22
+#define addr_ioex_panel2 3     //0x23
+#define addr_ioex_panel3 4     //0x24
+#define addr_ioex_overhead1 5  //0x25
+#define addr_ioex_overhead2 6  //0x26
+#define addr_ioex_overhead3 7  //0x27
 
 //ledd = TLC59017 led driver
 #define addr_ledd_overhead1 0x60
@@ -38,14 +37,17 @@ Adafruit_ADS1015 anex_collective(addr_anex_collective);
 Adafruit_ADS1015 anex_panel(addr_anex_panel);
 Adafruit_ADS1015 anex_overhead(addr_anex_overhead);
 
-Adafruit_MCP23017 ioex_cyclic;
-Adafruit_MCP23017 ioex_collective;
-Adafruit_MCP23017 ioex_panel1;
-Adafruit_MCP23017 ioex_panel2;
-Adafruit_MCP23017 ioex_panel3;
-Adafruit_MCP23017 ioex_overhead1;
-Adafruit_MCP23017 ioex_overhead2;
-Adafruit_MCP23017 ioex_overhead3;
+struct ioex {
+  Adafruit_MCP23017 cyclic;
+  Adafruit_MCP23017 collective;
+  Adafruit_MCP23017 panel1;
+  Adafruit_MCP23017 panel2;
+  Adafruit_MCP23017 panel3;
+  Adafruit_MCP23017 overhead1;
+  Adafruit_MCP23017 overhead2;
+  Adafruit_MCP23017 overhead3;
+}
+struct ioex ioexmanager;
 
 TLC59116Manager tlcmanager(Wire, i2c_speed);
 
@@ -61,23 +63,39 @@ Joystick_ joystick(JOYSTICK_DEFAULT_REPORT_ID,JOYSTICK_TYPE_JOYSTICK,
 //type of input for every pin on each ioex
 //0 for unused/NYI, 1 for momentary, 2 for toggle, 3 for encoder phase A, 4 for encoder phase B.
 //Hats are handled elsewhere, so they get a 0
-byte type_ioex_cyclic[]     {1,1,1,1,1,0,0,0,0,1,0,0,0,0,0,0};
-byte type_ioex_collective[] {1,1,2,2,1,0,0,0,0,1,0,0,0,0,0,0};
-byte type_ioex_panel1[]     {2,1,1,1,1,1,1,1,3,4,3,4,3,4,1,1};
-byte type_ioex_panel2[]     {1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0};
-byte type_ioex_panel3[]     {1,1,1,3,4,3,4,1,1,1,1,3,4,3,4,1};
-byte type_ioex_overhead1[]  {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2};
-byte type_ioex_overhead2[]  {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2};
-byte type_ioex_overhead3[]  {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2};
-const byte button_types[] {
-  type_ioex_cyclic,
-  type_ioex_collective,
-  type_ioex_panel1,
-  type_ioex_panel2,
-  type_ioex_overhead1,
-  type_ioex_overhead2,
-  type_ioex_overhead3
-};
+struct struct_ioex_type { //struct to ease passing through functions
+  byte cyclic[16];
+  byte collective[16];
+  byte panel1[16];
+  byte panel2[16];
+  byte panel3[16];
+  byte overhead1[16];
+  byte overhead2[16];
+  byte overhead3[16];
+}
+
+const struct ioex_input_types struct_ioex_type {
+  {1,1,1,1,1,0,0,0,0,1,0,0,0,0,0,0}, //cyclic
+  {1,1,2,2,1,0,0,0,0,1,0,0,0,0,0,0}, //collective
+  {2,1,1,1,1,1,1,1,3,4,3,4,3,4,1,1}, //panel1
+  {1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0}, //panel2
+  {1,1,1,3,4,3,4,1,1,1,1,3,4,3,4,1}, //panel3
+  {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2}, //overhead1
+  {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2}, //overhead2
+  {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2}  //overhead3
+}
+
+//TODO: see which is required; above should work (and I would prefer it due to const) but
+//leaving this here just in case
+    //struct ioex_input_types struct_ioex_type;
+    //ioex_input_types.cyclic =      {1,1,1,1,1,0,0,0,0,1,0,0,0,0,0,0};
+    //ioex_input_types.collective =  {1,1,2,2,1,0,0,0,0,1,0,0,0,0,0,0};
+    //ioex_input_types.panel1 =      {2,1,1,1,1,1,1,1,3,4,3,4,3,4,1,1};
+    //ioex_input_types.panel2 =      {1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0};
+    //ioex_input_types.panel3 =      {1,1,1,3,4,3,4,1,1,1,1,3,4,3,4,1};
+    //ioex_input_types.overhead1 =   {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2};
+    //ioex_input_types.overhead2 =   {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2};
+    //ioex_input_types.overhead3 =   {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2};
 
 void setup() {
   //anex setup
@@ -87,12 +105,12 @@ void setup() {
   anex_overhead.begin();
 
   //ioex setup
-  ioex_cyclic.begin(addr_ioex_cyclic - addr_ioex_offset);
-  ioex_collective.begin(addr_ioex_collective - addr_ioex_offset);
-  ioex_panel1.begin(addr_ioex_panel1 - addr_ioex_offset);
-  ioex_panel2.begin(addr_ioex_panel2 - addr_ioex_offset);
-  ioex_overhead1.begin(addr_ioex_overhead1 - addr_ioex_offset);
-  ioex_overhead2.begin(addr_ioex_overhead2 - addr_ioex_offset);
+  ioexmanager.cyclic.begin(addr_ioex_cyclic - addr_ioex_offset);
+  ioexmanager.collective.begin(addr_ioex_collective - addr_ioex_offset);
+  ioexmanager.panel1.begin(addr_ioex_panel1 - addr_ioex_offset);
+  ioexmanager.panel2.begin(addr_ioex_panel2 - addr_ioex_offset);
+  ioexmanager.overhead1.begin(addr_ioex_overhead1 - addr_ioex_offset);
+  ioexmanager.overhead2.begin(addr_ioex_overhead2 - addr_ioex_offset);
 
   //ledd setup
   tlcmanager.init();
@@ -194,16 +212,17 @@ void test_mode() {
   instrument_dimmer = anex_overhead.readADC_SingleEnded(0);
   rotor_brake =  anex_overhead.readADC_SingleEnded(1);
 
-  //TODO: redo this section to include third panel and overhead ioex's, and to follow the naming
-  //standards from the main loop
+  //TODO: redo this section to use struct
 
   //read all digitals
-  cyclic_inputs = ~ioex_cyclic.readGPIOAB();
-  collective_inputs = ~ioex_collective.readGPIOAB();
-  panel_inputs_a = ~ioex_panel1.readGPIOAB();
-  panel_inputs_b = ~ioex_panel2.readGPIOAB();
-  overhead_inputs_a = ~ioex_overhead1.readGPIOAB();
-  overhead_inputs_b = ~ioex_overhead2.readGPIOAB();
+  cyclic_inputs = ~ioexmanager.cyclic.readGPIOAB();
+  collective_inputs = ~ioexmanager.collective.readGPIOAB();
+  panel1_inputs = ~ioexmanager.panel1.readGPIOAB();
+  panel2_inputs = ~ioexmanager.panel2.readGPIOAB();
+  panel3_inputs = ~ioexmanager.panel3.readGPIOAB();
+  overhead1_inputs = ~ioexmanager.overhead1_inputs.readGPIOAB();
+  overhead2_inputs = ~ioexmanager.overhead2_inputs.readGPIOAB();
+  overhead3_inputs = ~ioexmanager.overhead3_inputs.readGPIOAB();
 
   
   //get highest digital input pin number
