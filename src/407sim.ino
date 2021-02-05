@@ -127,18 +127,6 @@ const struct ioex_input_types struct_ioex_type {
   {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2}  //overhead3
 };
 
-//TODO: see which is required; above should work (and I would prefer it due to const) but
-//leaving this here just in case
-    //struct ioex_input_types struct_ioex_type;
-    //ioex_input_types.cyclic =      {1,1,1,1,1,0,0,0,0,1,0,0,0,0,0,0};
-    //ioex_input_types.collective =  {1,1,2,2,1,0,0,0,0,1,0,0,0,0,0,0};
-    //ioex_input_types.panel1 =      {2,1,1,1,1,1,1,1,3,4,3,4,3,4,1,1};
-    //ioex_input_types.panel2 =      {1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0};
-    //ioex_input_types.panel3 =      {1,1,1,3,4,3,4,1,1,1,1,3,4,3,4,1};
-    //ioex_input_types.overhead1 =   {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2};
-    //ioex_input_types.overhead2 =   {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2};
-    //ioex_input_types.overhead3 =   {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2};
-
 
 
 
