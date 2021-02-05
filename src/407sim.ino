@@ -429,22 +429,78 @@ void loop() {
 
 
 
+    //joystick button number iterator
+    //run through all inputs, checking against input type
 
+      //if momentary
+        //set next joystick button to state of input 
+        //increment joystick button
 
-    //need to store release time for each toggle and press state
-    //check if current time is past the release time
-      //if it is past and the state is false and the switch is active, we're in a new press event, so:
-        //send a press, set a new release time, and set state true
-      //if it is and the state is true, we're ready to release, so:
-        //send release   (check state first to help with short circuiting)
-      //if not and state is true, we're still waiting for release time so:
-        //do nothing
+      //if toggle
+        //toggle method:
+        //state for each toggle
+        //timer for each state of each toggle [array?]
+
+        //switch
+          //switch off, no change
+            //state         0
+            //input         0
+            //past timer    1
+              //nop
+          //switch on, change
+            //state         0
+            //input         1
+            //past timer    1
+              //set timer
+              //set state 1
+              //send [on] press
+          //switch on, waiting for release
+            //state         1
+            //input         1
+            //past timer    0
+              //nop
+          //switch on, ready for release
+            //state         1
+            //input         1
+            //past timer    1
+              //send release
+          //switch on, no change (same as previous)
+            //state         1
+            //input         1
+            //past timer    1
+              //send [on] release
+          //switch off, change
+            //state         1
+            //input         0
+            //past timer    1
+              //set timer
+              //set state 0
+              //send [off] press
+          //switch off, waiting for release
+            //state         0
+            //input         0
+            //past timer    0
+              //nop
+          //switch off, ready for release
+            //state         0
+            //input         0
+            //past timer    1
+              //send [off] release
+      
+      //if encoder
+      //previous state bool
+        //if phaseA != previous state
+          //if phaseB != phaseA
+            //send increment press
+          //if phaseB == phaseA
+            //send decrement press
+
 
 
 
   } else {go_to_safe_mode = true;};
 
-
+  
 
 
   if go_to_safe_mode {
