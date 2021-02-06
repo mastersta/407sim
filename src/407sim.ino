@@ -146,6 +146,17 @@ struct ioex_input_values struct_ioex_values {0,0,0,0,0,0,0,0}; //init at 0
 
 
 
+
+struct struct_toggle_data {
+  bool state[256];
+  unsigned long timer[256];
+};
+
+struct struct_toggle_data toggle_data;
+      
+
+
+
 void setup() {
 
   //anex setup
@@ -420,6 +431,7 @@ void loop() {
 
     //joystick button number iterator
     int button_i = 0;
+    unsigned long current_millis = millis();
     //run through all inputs, checking against input type
     for ( byte i = 0; i < 16; i++; ) {
 
@@ -431,58 +443,49 @@ void loop() {
 
 
       //toggle method:
-      //state for each toggle [array?]
-      //timer for each state of each toggle [array?]
+      //state for each toggle [array?] toggle_data.state
+      //timer for each state of each toggle [array?] toggle_data.timer
+
+      //for the inverse operations (when turning off a toggle, which joystick button to press?):
+      //the joystick button nunber for the inverse will be the number following the non-inverse
+      //the timer array locations will be the non-inverse PLUS 128
+
       
-      //if toggle
+      //if toggle TODO: figure out problem with off press button number
       if (ioex_input_types.cyclic[i] = 2) {
         
-        switch(bitRead(ioex_input_values.cylic, i)) {
+        if                                                        //switch on, change
+        (!toggle_data.state[i])                                   //state         0  
+        && (bitRead(ioex_input_values.cylic, i))                  //input         1
+        && (current_millis - toggle_data.timer[i] > 0) {          //past timer    1
+            
+          toggle_data.timer[i] = current_millis + toggle_time;    //set timer
+          toggle_data.state[i] = 1;                               //set state 1
+          joystick.pressButton(i);                               //send [on] press
 
-          //switch off, no change
-            //state         0
-            //input         0
-            //past timer    1
-              //nop
-          //switch on, change
-            //state         0
-            //input         1
-            //past timer    1
-              //set timer
-              //set state 1
-              //send [on] press
-          //switch on, waiting for release
-            //state         1
-            //input         1
-            //past timer    0
-              //nop
-          //switch on, ready for release
-            //state         1
-            //input         1
-            //past timer    1
-              //send release
-          //switch on, no change (same as previous)
-            //state         1
-            //input         1
-            //past timer    1
-              //send [on] release
-          //switch off, change
-            //state         1
-            //input         0
-            //past timer    1
-              //set timer
-              //set state 0
-              //send [off] press
-          //switch off, waiting for release
-            //state         0
-            //input         0
-            //past timer    0
-              //nop
-          //switch off, ready for release
-            //state         0
-            //input         0
-            //past timer    1
-              //send [off] release
+
+        } else if                                                 //switch on, ready for release/already released
+        (toggle_data.state[i])                                    //state         1 
+        && (bitRead(ioex_input_values.cylic, i))                 //input         1
+        && (current_millis - toggle_data.timer[i] > 0) {         //past timer    1
+          
+          joystick.releaseButton(i);
+
+        } else if                                                 //switch off, change
+        (toggle_data.state[i])                                    //state         1
+        && (!bitRead(ioex_input_values.cyclic, i))                //input         0
+        && (current_millis - toggle_data.timer[i + 128] > 0) {    //past timer    1
+
+          toggle_data.timer[i + 128] = current_millis + toggle_time; //set timer
+          toggle_data.state[i] = 0;                                  //set state 0
+          joystick.pressButton(i + 1);                               //send [off] press
+            
+        } else if                                                 //switch off, ready for release
+        (!toggle_data.state[i])                                   //state         0
+        && (!bitRead(ioex_input_values.cyclic, i))                //input         0
+        && (current_millis - toggle_data.timer[i + 128] > 0) {    //past timer    1
+
+          joystick.releaseButton(i + 1);                          //send [off] release
         };
       };
       
