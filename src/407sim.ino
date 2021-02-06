@@ -7,6 +7,7 @@
 
 //misc defines
 #define i2c_speed 100000 //increase later after testing
+#define toggle_time 100  //time to press joystick button for toggles
 
 //anex = ADS1015 analog input expander
 #define addr_anex_cyclic 0x48
@@ -287,7 +288,7 @@ void test_mode() {
   unsigned int highest_input = 0; //run through MS inputs, bit by bit, to find first high input
 
   for (i = 32; i >= 0; i--) {
-    if bitread(all_digital_inputs_b, 31) { //if current bit is high
+    if bitRead(all_digital_inputs_b, 31) { //if current bit is high
       highest_input = i + 32; //set as highest input, accounting for the LS set of inputs
       break; //and break out
     }
@@ -296,7 +297,7 @@ void test_mode() {
 
   if highest_input = 0 { //only do if we had no high inputs from before
     for (i = 32; i >= 0; i--) { //same thing as previous
-      if bitread(all_digital_inputs_a, 31) {
+      if bitRead(all_digital_inputs_a, 31) {
         highest_input = i;
         break;
       }
@@ -418,18 +419,26 @@ void loop() {
 
 
     //joystick button number iterator
+    int button_i = 0;
     //run through all inputs, checking against input type
+    for ( byte i = 0; i < 16; i++; ) {
 
       //if momentary
+      if (ioex_input_types.cyclic[i] = 1) {
         //set next joystick button to state of input 
-        //increment joystick button
+        Joystick.setButton(i, bitRead(ioex_input_values.cyclic, i));
+      };
 
+
+      //toggle method:
+      //state for each toggle [array?]
+      //timer for each state of each toggle [array?]
+      
       //if toggle
-        //toggle method:
-        //state for each toggle
-        //timer for each state of each toggle [array?]
+      if (ioex_input_types.cyclic[i] = 2) {
+        
+        switch(bitRead(ioex_input_values.cylic, i)) {
 
-        //switch
           //switch off, no change
             //state         0
             //input         0
@@ -474,6 +483,8 @@ void loop() {
             //input         0
             //past timer    1
               //send [off] release
+        };
+      };
       
       //if encoder
       //previous state bool
@@ -484,6 +495,8 @@ void loop() {
             //send decrement press
 
 
+      //increment joystick button
+    };
 
 
   } else {go_to_safe_mode = true;};
