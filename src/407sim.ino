@@ -8,6 +8,7 @@
 //misc defines
 #define i2c_speed 100000 //increase later after testing
 #define toggle_time 100  //time to press joystick button for toggles
+#define encoder_time 50  //time to press joystick button for encoder increments/decrements
 
 //anex = ADS1015 analog input expander
 #define addr_anex_cyclic 0x48
@@ -148,12 +149,21 @@ struct ioex_input_values struct_ioex_values {0,0,0,0,0,0,0,0}; //init at 0
 
 
 struct struct_toggle_data {
-  bool state[256];
+  bool state[128];
   unsigned long timer[256];
 };
 
 struct struct_toggle_data toggle_data;
-      
+
+
+
+struct struct_encoder_data {
+  byte state[128];
+  unsigned long timer[128];
+};
+
+struct struct_encoder_data encoder_data;
+
 
 
 
@@ -177,7 +187,7 @@ void setup() {
   tlcmanager.init();
   tlcmanager.broadcast().set_milliamps(20, 1000);
   
-}
+};
 
 
 
@@ -196,7 +206,7 @@ int hat_direction(int input_array) {
   int mask = B0000;
   for (int i = 0; i < 4; i++) {
     mask = output_array[i] | mask;
-  }
+  };
 
   switch (mask) {
     case B0000:
@@ -228,8 +238,8 @@ int hat_direction(int input_array) {
       break;
     default:
       return -1;
-  }
-}
+  };
+};
 
 
 
@@ -302,19 +312,19 @@ void test_mode() {
     if bitRead(all_digital_inputs_b, 31) { //if current bit is high
       highest_input = i + 32; //set as highest input, accounting for the LS set of inputs
       break; //and break out
-    }
+    };
     all_digital_inputs_b << i; //else shift it and loop around to look at the next bit
-  }
+  };
 
   if highest_input = 0 { //only do if we had no high inputs from before
     for (i = 32; i >= 0; i--) { //same thing as previous
       if bitRead(all_digital_inputs_a, 31) {
         highest_input = i;
         break;
-      }
+      };
       all_digital_inputs_a << i;
-    }
-  }
+    };
+  };
 
 
 
@@ -337,7 +347,7 @@ void test_mode() {
     map(anex_input_values.panel[0],       -2048,2048,0,256), //antitorque
     map(anex_input_values.panel[1],       -2048,2048,0,256), //gtn1 vol
     map(anex_input_values.panel[2],       -2048,2048,0,256), //gtn2 vol
-    map(anex_input_values.overhead[0]     -2048,2048,0,256), //instrument dimmer
+    map(anex_input_values.overhead[0]     -2048,2048,0,256)  //instrument dimmer
   };
 
   //set following 1 light for remaining axis
@@ -350,7 +360,7 @@ void test_mode() {
   leddmanager.panel1.set_outputs(0,0,pwn_values_b);
 
 
-}
+};
 
 
 
@@ -384,7 +394,7 @@ void safe_mode() {
   ledd_panel_2.group_blink(2,1,128);
   ledd_panel_2.group_blink(3,1,128);
 
-}
+};
 
 
 
@@ -415,7 +425,7 @@ void loop() {
       bitRead(ioex_input_values.cyclic, 6), //right
       bitRead(ioex_input_values.cyclic, 8), //down
       bitRead(ioex_input_values.cyclic, 7) //left
-    }
+    };
     joystick.setHatSwitch(0, hat_direction(cyclic_hat_array));
 
 
@@ -424,21 +434,28 @@ void loop() {
       bitRead(ioex_input_values.collective, 6), //right
       bitRead(ioex_input_values.collective, 8), //down
       bitRead(ioex_input_values.collective, 7), //left
-    }
+    };
     joystick.setHatSwitch(1, hat_direction(collective_hat_array));
 
 
 
     //joystick button number iterator
     int button_i = 0;
+
+    //grab millis now to ensure we're working with the same data throughout
     unsigned long current_millis = millis();
+
+
+
+
     //run through all inputs, checking against input type
-    for ( byte i = 0; i < 16; i++; ) {
+    for ( byte i = 0; i < 16; i++) {
 
       //if momentary
       if (ioex_input_types.cyclic[i] = 1) {
         //set next joystick button to state of input 
-        Joystick.setButton(i, bitRead(ioex_input_values.cyclic, i));
+        Joystick.setButton(button_i, bitRead(ioex_input_values.cyclic, i));
+        button_i++;
       };
 
 
@@ -452,7 +469,7 @@ void loop() {
 
       
       //if toggle TODO: figure out problem with off press button number
-      if (ioex_input_types.cyclic[i] = 2) {
+      else if (ioex_input_types.cyclic[i] = 2) {
         
         if                                                        //switch on, change
         (!toggle_data.state[i])                                   //state         0  
@@ -461,7 +478,7 @@ void loop() {
             
           toggle_data.timer[i] = current_millis + toggle_time;    //set timer
           toggle_data.state[i] = 1;                               //set state 1
-          joystick.pressButton(i);                               //send [on] press
+          joystick.pressButton(button_i);                         //send [on] press
 
 
         } else if                                                 //switch on, ready for release/already released
@@ -469,7 +486,7 @@ void loop() {
         && (bitRead(ioex_input_values.cylic, i))                 //input         1
         && (current_millis - toggle_data.timer[i] > 0) {         //past timer    1
           
-          joystick.releaseButton(i);
+          joystick.releaseButton(button_i);
 
         } else if                                                 //switch off, change
         (toggle_data.state[i])                                    //state         1
@@ -478,27 +495,42 @@ void loop() {
 
           toggle_data.timer[i + 128] = current_millis + toggle_time; //set timer
           toggle_data.state[i] = 0;                                  //set state 0
-          joystick.pressButton(i + 1);                               //send [off] press
+          joystick.pressButton(button_i + 1);                               //send [off] press
             
         } else if                                                 //switch off, ready for release
         (!toggle_data.state[i])                                   //state         0
         && (!bitRead(ioex_input_values.cyclic, i))                //input         0
         && (current_millis - toggle_data.timer[i + 128] > 0) {    //past timer    1
 
-          joystick.releaseButton(i + 1);                          //send [off] release
+          joystick.releaseButton(button_i + 1);                          //send [off] release
         };
+        button_i = button_i + 2; //if it's a toggle, the immediate next joystick button will be the [off] button
       };
       
+
+
+      //TODO: implement timed presses into encoder code
       //if encoder
-      //previous state bool
+      else if (ioex_input_types.cyclic[i] = 3) {
+
         //if phaseA != previous state
+        if (bitRead(ioex_input_values.cyclic, i) != bitRead(encoder_data.state[i], 0)) {
+
           //if phaseB != phaseA
+          if (bitRead(ioex_input_values.cyclic, i + 1) != bitRead(encoder_data.state[i], 0)) {
+
             //send increment press
+
           //if phaseB == phaseA
+          } else {
+            
             //send decrement press
 
+          };
 
-      //increment joystick button
+
+        };
+      };
     };
 
 
@@ -509,7 +541,7 @@ void loop() {
 
   if go_to_safe_mode {
     safe_mode();
-  }
+  };
 
 
-}
+};
