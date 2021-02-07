@@ -300,10 +300,10 @@ void test_mode() {
 
   static unsigned long all_digital_inputs_b = 0; //read MS 32 inputs
   all_digital_inputs_b = (
-    (ioex_input_values.overhead3<<24)
+    (ioex_input_values.overhead3<<24) +
     (ioex_input_values.overhead2<<16) +
     (ioex_input_values.overhead1<<8) +
-    (ioex_input_values.panel3) +
+    (ioex_input_values.panel3)
   );
   
   unsigned int highest_input = 0; //run through MS inputs, bit by bit, to find first high input
@@ -347,7 +347,7 @@ void test_mode() {
     map(anex_input_values.panel[0],       -2048,2048,0,256), //antitorque
     map(anex_input_values.panel[1],       -2048,2048,0,256), //gtn1 vol
     map(anex_input_values.panel[2],       -2048,2048,0,256), //gtn2 vol
-    map(anex_input_values.overhead[0]     -2048,2048,0,256)  //instrument dimmer
+    map(anex_input_values.overhead[0],    -2048,2048,0,256)  //instrument dimmer
   };
 
   //set following 1 light for remaining axis
@@ -558,7 +558,7 @@ void loop() {
       bitRead(ioex_input_values.collective, 5), //up
       bitRead(ioex_input_values.collective, 6), //right
       bitRead(ioex_input_values.collective, 8), //down
-      bitRead(ioex_input_values.collective, 7), //left
+      bitRead(ioex_input_values.collective, 7)  //left
     };
 
     joystick.setHatSwitch(1, hat_direction(collective_hat_array));
