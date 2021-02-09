@@ -17,14 +17,14 @@
 #define addr_anex_overhead 0x4B
 
 //ioex = MCP23017 digital I/O expander
-#define addr_ioex_cyclic 0     //0x20
-#define addr_ioex_collective 1 //0x21
-#define addr_ioex_panel1 2     //0x22
-#define addr_ioex_panel2 3     //0x23
-#define addr_ioex_panel3 4     //0x24
-#define addr_ioex_overhead1 5  //0x25
-#define addr_ioex_overhead2 6  //0x26
-#define addr_ioex_overhead3 7  //0x27
+#define addr_ioex_cyclic 0x20
+#define addr_ioex_collective 0x21
+#define addr_ioex_panel1 0x22
+#define addr_ioex_panel2 0x23
+#define addr_ioex_panel3 0x24
+#define addr_ioex_overhead1 0x25
+#define addr_ioex_overhead2 0x26
+#define addr_ioex_overhead3 0x27
 
 //ledd = TLC59017 led driver
 #define addr_ledd_overhead1 0x60
@@ -36,15 +36,18 @@
 
 
 
+//TODO: Either figure out why this doesn't work in a struct and fix it, or find another way
+//Can't init inside a struct for some reason. Find way to init outside of struct and then
+//init struct with references???
 
-struct anex {
-  Adafruit_ADS1015 cyclic(addr_anex_cyclic);
-  Adafruit_ADS1015 collective(addr_anex_collective);
-  Adafruit_ADS1015 panel(addr_anex_panel);
-  Adafruit_ADS1015 overhead(addr_anex_overhead);
-};
+//struct anex {
+//  Adafruit_ADS1015 cyclic(addr_anex_cyclic);
+//  Adafruit_ADS1015 collective(addr_anex_collective);
+//  Adafruit_ADS1015 panel(addr_anex_panel);
+//  Adafruit_ADS1015 overhead(addr_anex_overhead);
+//};
 
-struct anex anexmanager;
+//struct anex anexmanager;
 
 
 
@@ -86,7 +89,6 @@ Joystick_ joystick(JOYSTICK_DEFAULT_REPORT_ID,JOYSTICK_TYPE_JOYSTICK,
   );
 
 
-
 struct struct_anex_values {  //stores analog input values
   int cyclic[4];
   int collective[4];
@@ -94,7 +96,7 @@ struct struct_anex_values {  //stores analog input values
   int overhead[4];
 };
 
-struct anex_input_values struct_anex_values { //init to zero
+struct struct_anex_values anex_input_values { //init to zero
   {0,0,0,0},
   {0,0,0,0},
   {0,0,0,0},
@@ -118,7 +120,7 @@ struct struct_ioex_type { //struct to ease passing through functions
   byte overhead3[16];
 };
 
-const struct ioex_input_types struct_ioex_type {
+const struct struct_ioex_type ioex_input_types {
   {1,1,1,1,1,0,0,0,0,1,0,0,0,0,0,0}, //cyclic
   {1,1,2,2,1,0,0,0,0,1,0,0,0,0,0,0}, //collective
   {2,1,1,1,1,1,1,1,3,4,3,4,3,4,1,1}, //panel1
@@ -143,7 +145,7 @@ struct struct_ioex_values { //struct to ease passing through functions, used to 
   unsigned int overhead3;
 };
 
-struct ioex_input_values struct_ioex_values {0,0,0,0,0,0,0,0}; //init at 0
+struct struct_ioex_values ioex_input_values {0,0,0,0,0,0,0,0}; //init at 0
 
 
 
@@ -169,19 +171,22 @@ struct struct_encoder_data encoder_data;
 
 void setup() {
 
+  //TODO: Uncomment when anexmanager struct issue solved
   //anex setup
-  anexmanager.cyclic.begin();
-  anexmanager.collective.begin();
-  anexmanager.panel.begin();
-  anexmanager.overhead.begin();
+  //anexmanager.cyclic.begin();
+  //anexmanager.collective.begin();
+  //anexmanager.panel.begin();
+  //anexmanager.overhead.begin();
 
   //ioex setup
-  ioexmanager.cyclic.begin(addr_ioex_cyclic - addr_ioex_offset);
-  ioexmanager.collective.begin(addr_ioex_collective - addr_ioex_offset);
-  ioexmanager.panel1.begin(addr_ioex_panel1 - addr_ioex_offset);
-  ioexmanager.panel2.begin(addr_ioex_panel2 - addr_ioex_offset);
-  ioexmanager.overhead1.begin(addr_ioex_overhead1 - addr_ioex_offset);
-  ioexmanager.overhead2.begin(addr_ioex_overhead2 - addr_ioex_offset);
+  ioexmanager.cyclic.begin(addr_ioex_cyclic);
+  ioexmanager.collective.begin(addr_ioex_collective);
+  ioexmanager.panel1.begin(addr_ioex_panel1);
+  ioexmanager.panel2.begin(addr_ioex_panel2);
+  ioexmanager.panel3.begin(addr_ioex_panel3);
+  ioexmanager.overhead1.begin(addr_ioex_overhead1);
+  ioexmanager.overhead2.begin(addr_ioex_overhead2);
+  ioexmanager.overhead3.begin(addr_ioex_overhead3);
 
   //ledd setup
   tlcmanager.init();
@@ -192,7 +197,7 @@ void setup() {
 
 
 
-int hat_direction(int input_array) {
+int hat_direction(int input_array[]) {
 //takes in an array of the four hat switch states (up, right, down, left) already inverted so 1 = engaged
 //outputs the degrees that the joystick library expects for the hat position
 
@@ -245,15 +250,15 @@ int hat_direction(int input_array) {
 
 
 bool read_all_analogs() {  //sets global anex_input_values struct
-  anex_input_values.cyclic[0] =       anexmanager.cyclic.readADC_SingleEnded(0);     //pitch
-  anex_input_values.cyclic[1] =       anexmanager.cyclic.readADC_SingleEnded(1);     //roll
-  anex_input_values.collective[0] =   anexmanager.collective.readADC_SingleEnded(0); //collective
-  anex_input_values.collective[1] =   anexmanager.collective.readADC_SingleEnded(1); //throttle
-  anex_input_values.panel[0] =        anexmanager.panel.readADC_SingleEnded(0);      //antitorque
-  anex_input_values.panel[1] =        anexmanager.panel.readADC_SingleEnded(1);      //gtn1 vol
-  anex_input_values.panel[2] =        anexmanager.panel.readADC_SingleEnded(2);      //gtn2 vol
-  anex_input_values.overhead[0] =     anexmanager.overhead.readADC_SingleEnded(0);   //instrument dimmer
-  anex_input_values.overhead[1] =     anexmanager.overhead.readADC_SingleEnded(1);   //rotor brake
+  //anex_input_values.cyclic[0] =       anexmanager.cyclic.readADC_SingleEnded(0);     //pitch
+  //anex_input_values.cyclic[1] =       anexmanager.cyclic.readADC_SingleEnded(1);     //roll
+  //anex_input_values.collective[0] =   anexmanager.collective.readADC_SingleEnded(0); //collective
+  //anex_input_values.collective[1] =   anexmanager.collective.readADC_SingleEnded(1); //throttle
+  //anex_input_values.panel[0] =        anexmanager.panel.readADC_SingleEnded(0);      //antitorque
+  //anex_input_values.panel[1] =        anexmanager.panel.readADC_SingleEnded(1);      //gtn1 vol
+  //anex_input_values.panel[2] =        anexmanager.panel.readADC_SingleEnded(2);      //gtn2 vol
+  //anex_input_values.overhead[0] =     anexmanager.overhead.readADC_SingleEnded(0);   //instrument dimmer
+  //anex_input_values.overhead[1] =     anexmanager.overhead.readADC_SingleEnded(1);   //rotor brake
   return true;  //if something goes wrong, might return false and we can use that to go to safe mode
 };
 
@@ -266,11 +271,16 @@ bool read_all_digitals() {  //invert due to pullups
   ioex_input_values.panel1 =     ~ioexmanager.panel1.readGPIOAB();
   ioex_input_values.panel2 =     ~ioexmanager.panel2.readGPIOAB();
   ioex_input_values.panel3 =     ~ioexmanager.panel3.readGPIOAB();
-  ioex_input_values.overhead1 =  ~ioexmanager.overhead1_inputs.readGPIOAB();
-  ioex_input_values.overhead2 =  ~ioexmanager.overhead2_inputs.readGPIOAB();
-  ioex_input_values.overhead3 =  ~ioexmanager.overhead3_inputs.readGPIOAB();
+  ioex_input_values.overhead1 =  ~ioexmanager.overhead1.readGPIOAB();
+  ioex_input_values.overhead2 =  ~ioexmanager.overhead2.readGPIOAB();
+  ioex_input_values.overhead3 =  ~ioexmanager.overhead3.readGPIOAB();
   return true;  //if something goes wrong, might return false and we can use that to go to safe mode
 };
+
+
+
+
+//===============COMPILES UP TO HERE=================//
 
 
 
