@@ -36,18 +36,20 @@
 
 
 
-//TODO: Either figure out why this doesn't work in a struct and fix it, or find another way
-//Can't init inside a struct for some reason. Find way to init outside of struct and then
-//init struct with references???
 
-//struct anex {
-//  Adafruit_ADS1015 cyclic(addr_anex_cyclic);
-//  Adafruit_ADS1015 collective(addr_anex_collective);
-//  Adafruit_ADS1015 panel(addr_anex_panel);
-//  Adafruit_ADS1015 overhead(addr_anex_overhead);
-//};
+struct anex {
+  Adafruit_ADS1015 cyclic;
+  Adafruit_ADS1015 collective;
+  Adafruit_ADS1015 panel;
+  Adafruit_ADS1015 overhead;
+};
 
-//struct anex anexmanager;
+struct anex anexmanager{
+  Adafruit_ADS1015(addr_anex_cyclic),
+  Adafruit_ADS1015(addr_anex_collective),
+  Adafruit_ADS1015(addr_anex_panel),
+  Adafruit_ADS1015(addr_anex_overhead)
+};
 
 
 
@@ -171,12 +173,11 @@ struct struct_encoder_data encoder_data;
 
 void setup() {
 
-  //TODO: Uncomment when anexmanager struct issue solved
   //anex setup
-  //anexmanager.cyclic.begin();
-  //anexmanager.collective.begin();
-  //anexmanager.panel.begin();
-  //anexmanager.overhead.begin();
+  anexmanager.cyclic.begin();
+  anexmanager.collective.begin();
+  anexmanager.panel.begin();
+  anexmanager.overhead.begin();
 
   //ioex setup
   ioexmanager.cyclic.begin(addr_ioex_cyclic);
@@ -250,15 +251,15 @@ int hat_direction(int input_array[]) {
 
 
 bool read_all_analogs() {  //sets global anex_input_values struct
-  //anex_input_values.cyclic[0] =       anexmanager.cyclic.readADC_SingleEnded(0);     //pitch
-  //anex_input_values.cyclic[1] =       anexmanager.cyclic.readADC_SingleEnded(1);     //roll
-  //anex_input_values.collective[0] =   anexmanager.collective.readADC_SingleEnded(0); //collective
-  //anex_input_values.collective[1] =   anexmanager.collective.readADC_SingleEnded(1); //throttle
-  //anex_input_values.panel[0] =        anexmanager.panel.readADC_SingleEnded(0);      //antitorque
-  //anex_input_values.panel[1] =        anexmanager.panel.readADC_SingleEnded(1);      //gtn1 vol
-  //anex_input_values.panel[2] =        anexmanager.panel.readADC_SingleEnded(2);      //gtn2 vol
-  //anex_input_values.overhead[0] =     anexmanager.overhead.readADC_SingleEnded(0);   //instrument dimmer
-  //anex_input_values.overhead[1] =     anexmanager.overhead.readADC_SingleEnded(1);   //rotor brake
+  anex_input_values.cyclic[0] =       anexmanager.cyclic.readADC_SingleEnded(0);     //pitch
+  anex_input_values.cyclic[1] =       anexmanager.cyclic.readADC_SingleEnded(1);     //roll
+  anex_input_values.collective[0] =   anexmanager.collective.readADC_SingleEnded(0); //collective
+  anex_input_values.collective[1] =   anexmanager.collective.readADC_SingleEnded(1); //throttle
+  anex_input_values.panel[0] =        anexmanager.panel.readADC_SingleEnded(0);      //antitorque
+  anex_input_values.panel[1] =        anexmanager.panel.readADC_SingleEnded(1);      //gtn1 vol
+  anex_input_values.panel[2] =        anexmanager.panel.readADC_SingleEnded(2);      //gtn2 vol
+  anex_input_values.overhead[0] =     anexmanager.overhead.readADC_SingleEnded(0);   //instrument dimmer
+  anex_input_values.overhead[1] =     anexmanager.overhead.readADC_SingleEnded(1);   //rotor brake
   return true;  //if something goes wrong, might return false and we can use that to go to safe mode
 };
 
