@@ -281,11 +281,6 @@ bool read_all_digitals() {  //invert due to pullups
 
 
 
-//===============COMPILES UP TO HERE=================//
-
-
-
-
 void test_mode() {
   //plan is to get highest digital input pin number (based on wire numbering diagram) and output that
   //pin number, in binary, to the annunciator; lights will be lit up in order to represent that pin
@@ -296,8 +291,8 @@ void test_mode() {
   //engage this mode. 
 
 
-  if read_all_analogs() {}; //ignore return, we don't care if something goes wrong
-  if read_all_digitals() {};
+  if (read_all_analogs()) {}; //ignore return, we don't care if something goes wrong
+  if (read_all_digitals()) {};
 
 
   //get highest digital input pin number
@@ -319,8 +314,8 @@ void test_mode() {
   
   unsigned int highest_input = 0; //run through MS inputs, bit by bit, to find first high input
 
-  for (i = 32; i >= 0; i--) {
-    if bitRead(all_digital_inputs_b, 31) { //if current bit is high
+  for (int i = 32; i >= 0; i--) {
+    if (bitRead(all_digital_inputs_b, 31)) { //if current bit is high
       highest_input = i + 32; //set as highest input, accounting for the LS set of inputs
       break; //and break out
     };
@@ -328,8 +323,8 @@ void test_mode() {
   };
 
   if highest_input = 0 { //only do if we had no high inputs from before
-    for (i = 32; i >= 0; i--) { //same thing as previous
-      if bitRead(all_digital_inputs_a, 31) {
+    for (int i = 32; i >= 0; i--) { //same thing as previous
+      if (bitRead(all_digital_inputs_a, 31)) {
         highest_input = i;
         break;
       };
@@ -350,28 +345,33 @@ void test_mode() {
   leddmanager.panel1.on_pattern(highest_input<<8).off_pattern(~highest_input<<8);
   
   //set second 8 lights to reflect pwm values of analog axes
-  int pwm_values_a[8] = {
-    map(anex_input_values.cyclic[0],      -2048,2048,0,256), //pitch
-    map(anex_input_values.cyclic[1],      -2048,2048,0,256), //roll
-    map(anex_input_values.collective[0],  -2048,2048,0,256), //collective
-    map(anex_input_values.collective[1],  -2048,2048,0,256), //throttle
-    map(anex_input_values.panel[0],       -2048,2048,0,256), //antitorque
-    map(anex_input_values.panel[1],       -2048,2048,0,256), //gtn1 vol
-    map(anex_input_values.panel[2],       -2048,2048,0,256), //gtn2 vol
-    map(anex_input_values.overhead[0],    -2048,2048,0,256)  //instrument dimmer
+  byte pwm_values_a[8] = {
+    map(anex_input_values.cyclic[0],      -2048,2048,0,255), //pitch
+    map(anex_input_values.cyclic[1],      -2048,2048,0,255), //roll
+    map(anex_input_values.collective[0],  -2048,2048,0,255), //collective
+    map(anex_input_values.collective[1],  -2048,2048,0,255), //throttle
+    map(anex_input_values.panel[0],       -2048,2048,0,255), //antitorque
+    map(anex_input_values.panel[1],       -2048,2048,0,255), //gtn1 vol
+    map(anex_input_values.panel[2],       -2048,2048,0,255), //gtn2 vol
+    map(anex_input_values.overhead[0],    -2048,2048,0,255)  //instrument dimmer
   };
 
   //set following 1 light for remaining axis
-  int pwm_values_b[1] = {
+  byte pwm_values_b[1] = {
     map(anex_input_values.overhead[1],    -2048,2048,0,256)  //rotor brake
   };
 
   //set following lights for analog inputs
   leddmanager.panel1.set_outputs(8,15,pwm_values_a);
-  leddmanager.panel1.set_outputs(0,0,pwn_values_b);
+  leddmanager.panel1.set_outputs(0,0,pwm_values_b);
 
 
 };
+
+
+
+
+//===============COMPILES UP TO HERE=================//
 
 
 
