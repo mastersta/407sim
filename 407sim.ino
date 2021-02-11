@@ -358,7 +358,7 @@ void test_mode() {
 
   //set following 1 light for remaining axis
   byte pwm_values_b[1] = {
-    map(anex_input_values.overhead[1],    -2048,2048,0,256)  //rotor brake
+    map(anex_input_values.overhead[1],    -2048,2048,0,255)  //rotor brake
   };
 
   //set following lights for analog inputs
