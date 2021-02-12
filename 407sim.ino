@@ -138,6 +138,55 @@ struct ioex ioexmanager;
 
 
 
+bool read_all_digitals() {  //invert due to pullups
+  ioexmanager.values.cyclic =     ~ioexmanager.cyclic.readGPIOAB();
+  ioexmanager.values.collective = ~ioexmanager.collective.readGPIOAB();
+  ioexmanager.values.panel1 =     ~ioexmanager.panel1.readGPIOAB();
+  ioexmanager.values.panel2 =     ~ioexmanager.panel2.readGPIOAB();
+  ioexmanager.values.panel3 =     ~ioexmanager.panel3.readGPIOAB();
+  ioexmanager.values.overhead1 =  ~ioexmanager.overhead1.readGPIOAB();
+  ioexmanager.values.overhead2 =  ~ioexmanager.overhead2.readGPIOAB();
+  ioexmanager.values.overhead3 =  ~ioexmanager.overhead3.readGPIOAB();
+  return true;  //if something goes wrong, might return false and we can use that to go to safe mode
+};
+
+
+
+
+int& get_ioex_values_by_index(byte index) {
+  switch(index) {
+    case 0:
+      return ioexmanager.values.cyclic;
+      break;
+    case 1:
+      return ioexmanager.values.collective;
+      break;
+    case 2:
+      return ioexmanager.values.panel1;
+      break;
+    case 3:
+      return ioexmanager.values.panel2;
+      break;
+    case 4:
+      return ioexmanager.values.panel3;
+      break;
+    case 5:
+      return ioexmanager.values.overhead1;
+      break;
+    case 6:
+      return ioexmanager.values.overhead2;
+      break;
+    case 7:
+      return ioexmanager.values.overhead3;
+      break;
+    default:
+      return ioexmanager.values.cyclic;
+      break;
+  };
+};
+
+
+
 
 struct struct_toggle_data {
   bool state[128];
@@ -257,21 +306,6 @@ int hat_direction(int input_array[]) {
     default:
       return -1;
   };
-};
-
-
-
-
-bool read_all_digitals() {  //invert due to pullups
-  ioexmanager.values.cyclic =     ~ioexmanager.cyclic.readGPIOAB();
-  ioexmanager.values.collective = ~ioexmanager.collective.readGPIOAB();
-  ioexmanager.values.panel1 =     ~ioexmanager.panel1.readGPIOAB();
-  ioexmanager.values.panel2 =     ~ioexmanager.panel2.readGPIOAB();
-  ioexmanager.values.panel3 =     ~ioexmanager.panel3.readGPIOAB();
-  ioexmanager.values.overhead1 =  ~ioexmanager.overhead1.readGPIOAB();
-  ioexmanager.values.overhead2 =  ~ioexmanager.overhead2.readGPIOAB();
-  ioexmanager.values.overhead3 =  ~ioexmanager.overhead3.readGPIOAB();
-  return true;  //if something goes wrong, might return false and we can use that to go to safe mode
 };
 
 
@@ -436,110 +470,116 @@ void loop() {
     //grab millis now to ensure we're working with the same data throughout
     unsigned long current_millis = millis();
 
-    //TODO: figure out how to elegantly repeat for each ioex
-    //run through all inputs, checking against input type
-    for ( byte i = 0; i < 16; i++) {
+    //run through all the ioexs
+    for (byte j = 0; j < 8; j++) {
 
-      //if momentary
-      if (ioexmanager.types.cyclic[i] = 1) {
-        //set next joystick button to state of input 
-        Joystick.setButton(button_i, bitRead(ioexmanager.values.cyclic, i));
-        button_i++;
-      };
+      //grab the ioex of the index we're working on
+      int ioex_values = get_ioex_values_by_index(j);
 
+      //run through all inputs of the ioex, checking against input type
+      for ( byte i = 0; i < 16; i++) {
 
-      //the joystick button nunber for the inverse will be the number following the non-inverse
-      //the timer array locations will be the non-inverse PLUS 128
-
-      
-      //if toggle
-      else if (ioexmanager.types.cyclic[i] = 2) {
-        
-        if                                                        //switch on, change
-        (!toggle_data.state[i])                                   //state         0  
-        && (bitRead(ioexmanager.values.cylic, i))                  //input         1
-        && (current_millis - toggle_data.timer[i] > 0) {          //past timer    1
-            
-          toggle_data.timer[i] = current_millis + toggle_time;    //set timer
-          toggle_data.state[i] = 1;                               //set state 1
-          joystick.pressButton(button_i);                         //send [on] press
-
-
-        } else if                                                 //switch on, ready for release/already released
-        (toggle_data.state[i])                                    //state         1 
-        && (bitRead(ioexmanager.values.cylic, i))                  //input         1
-        && (current_millis - toggle_data.timer[i] > 0) {          //past timer    1
-          
-          joystick.releaseButton(button_i);                       //send [on] release
-
-        } else if                                                 //switch off, change
-        (toggle_data.state[i])                                    //state         1
-        && (!bitRead(ioexmanager.values.cyclic, i))                //input         0
-        && (current_millis - toggle_data.timer[i + 128] > 0) {    //past timer    1
-
-          toggle_data.timer[i + 128] = current_millis + toggle_time; //set timer
-          toggle_data.state[i] = 0;                                  //set state 0
-          joystick.pressButton(button_i + 1);                        //send [off] press
-            
-        } else if                                                 //switch off, ready for release
-        (!toggle_data.state[i])                                   //state         0
-        && (!bitRead(ioexmanager.values.cyclic, i))                //input         0
-        && (current_millis - toggle_data.timer[i + 128] > 0) {    //past timer    1
-
-          joystick.releaseButton(button_i + 1);                          //send [off] release
+        //if momentary
+        if (ioex_values[i] = 1) { //TODO: change to grab input type, not value
+          //set next joystick button to state of input 
+          Joystick.setButton(button_i, bitRead(ioex_values, i));
+          button_i++;
         };
 
+
+        //the joystick button nunber for the inverse will be the number following the non-inverse
+        //the timer array locations will be the non-inverse PLUS 128
+
         
-        //if it's a toggle, the immediate next joystick button will be the [off] button
-        //since the offs aren't separate physical switches, they aren't listed in the input_types
-        //list and thus need to be tracked separately to keep the iterator from getting out of sync
-        button_i = button_i + 2; 
-      };
-      
-      
-
-
-      //if encoder
-      else if (ioexmanager.types.cyclic[i] = 3) {
-
-        //if phaseA != previous state
-        if (bitRead(ioexmanager.values.cyclic, i) != bitRead(encoder_data.state[i], 0)) {
-
-          //if phaseB != phaseA
-          if (bitRead(ioexmanager.values.cyclic, i + 1) != bitRead(encoder_data.state[i], 0)) {
-
-            //send increment press
-            if (!encoder_data.state[i]) {
-
-              encoder_data.timer[i] = current_millis + encoder_time;
-              encoder_data.state[i] = 1;
-              joystick.pressButton(button_i);
-
-            } else {
+        //if toggle
+        else if (ioex_values[i] = 2) {
+          
+          if                                                        //switch on, change
+          (!toggle_data.state[i])                                   //state         0  
+          && (bitRead(ioex_values, i))                  //input         1
+          && (current_millis - toggle_data.timer[i] > 0) {          //past timer    1
               
-              if (current_millis - encoder_data.timer[i] > 0) {
+            toggle_data.timer[i] = current_millis + toggle_time;    //set timer
+            toggle_data.state[i] = 1;                               //set state 1
+            joystick.pressButton(button_i);                         //send [on] press
 
-                joystick.releaseButton(button_i);
 
-              };
-            };
-
-          //if phaseB == phaseA
-          } else {
+          } else if                                                 //switch on, ready for release/already released
+          (toggle_data.state[i])                                    //state         1 
+          && (bitRead(ioex_values, i))                  //input         1
+          && (current_millis - toggle_data.timer[i] > 0) {          //past timer    1
             
-            //send decrement press
-            if (!encoder_data.state[i + 1]) {
+            joystick.releaseButton(button_i);                       //send [on] release
 
-              encoder_data.timer[i + 1] = current_millis + encoder_time;
-              encoder_data.state[i + 1] = 1;
-              joystick.pressButton(button_i);
+          } else if                                                 //switch off, change
+          (toggle_data.state[i])                                    //state         1
+          && (!bitRead(ioex_values, i))                //input         0
+          && (current_millis - toggle_data.timer[i + 128] > 0) {    //past timer    1
 
+            toggle_data.timer[i + 128] = current_millis + toggle_time; //set timer
+            toggle_data.state[i] = 0;                                  //set state 0
+            joystick.pressButton(button_i + 1);                        //send [off] press
+              
+          } else if                                                 //switch off, ready for release
+          (!toggle_data.state[i])                                   //state         0
+          && (!bitRead(ioex_values, i))                //input         0
+          && (current_millis - toggle_data.timer[i + 128] > 0) {    //past timer    1
+
+            joystick.releaseButton(button_i + 1);                          //send [off] release
+          };
+
+          
+          //if it's a toggle, the immediate next joystick button will be the [off] button
+          //since the offs aren't separate physical switches, they aren't listed in the input_types
+          //list and thus need to be tracked separately to keep the iterator from getting out of sync
+          button_i = button_i + 2; 
+        };
+        
+        
+
+
+        //if encoder
+        else if (ioex_values[i] = 3) {
+
+          //if phaseA != previous state
+          if (bitRead(ioex_values, i) != bitRead(encoder_data.state[i], 0)) {
+
+            //if phaseB != phaseA
+            if (bitRead(ioex_values, i + 1) != bitRead(encoder_data.state[i], 0)) {
+
+              //send increment press
+              if (!encoder_data.state[i]) {
+
+                encoder_data.timer[i] = current_millis + encoder_time;
+                encoder_data.state[i] = 1;
+                joystick.pressButton(button_i);
+
+              } else {
+                
+                if (current_millis - encoder_data.timer[i] > 0) {
+
+                  joystick.releaseButton(button_i);
+
+                };
+              };
+
+            //if phaseB == phaseA
             } else {
               
-              if (current_millis - encoder_data.timer[i + 1] > 0) {
+              //send decrement press
+              if (!encoder_data.state[i + 1]) {
 
-                joystick.releaseButton(button_i);
+                encoder_data.timer[i + 1] = current_millis + encoder_time;
+                encoder_data.state[i + 1] = 1;
+                joystick.pressButton(button_i);
 
+              } else {
+                
+                if (current_millis - encoder_data.timer[i + 1] > 0) {
+
+                  joystick.releaseButton(button_i);
+
+                };
               };
             };
           };
