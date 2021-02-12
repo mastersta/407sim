@@ -91,76 +91,50 @@ struct ioex {
   Adafruit_MCP23017 overhead1;
   Adafruit_MCP23017 overhead2;
   Adafruit_MCP23017 overhead3;
+  
+  //type of input for every pin on each ioex
+  //0 for unused/NYI, 1 for momentary, 2 for toggle, 3 for encoder phase A, 4 for encoder phase B.
+  //Hats are handled elsewhere, so they get a 0
+  struct struct_ioex_type { //struct to ease passing through functions
+    byte cyclic[16];
+    byte collective[16];
+    byte panel1[16];
+    byte panel2[16];
+    byte panel3[16];
+    byte overhead1[16];
+    byte overhead2[16];
+    byte overhead3[16];
+  };
+
+  const struct struct_ioex_type types {
+    {1,1,1,1,1,0,0,0,0,1,0,0,0,0,0,0}, //cyclic
+    {1,1,2,2,1,0,0,0,0,1,0,0,0,0,0,0}, //collective
+    {2,1,1,1,1,1,1,1,3,4,3,4,3,4,1,1}, //panel1
+    {1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0}, //panel2
+    {1,1,1,3,4,3,4,1,1,1,1,3,4,3,4,1}, //panel3
+    {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2}, //overhead1
+    {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2}, //overhead2
+    {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2}  //overhead3
+  };
+
+
+  struct struct_ioex_values { //struct to ease passing through functions, used to store read values
+    unsigned int cyclic;
+    unsigned int collective;
+    unsigned int panel1;
+    unsigned int panel2;
+    unsigned int panel3;
+    unsigned int overhead1;
+    unsigned int overhead2;
+    unsigned int overhead3;
+  };
+
+  struct struct_ioex_values values {0,0,0,0,0,0,0,0}; //init at 0
+
 };
 
 struct ioex ioexmanager;
 
-
-
-
-TLC59116Manager tlcmanager(Wire, i2c_speed);
-
-struct ledd {
-  TLC59116 &panel1 = tlcmanager[3];
-  TLC59116 &panel2 = tlcmanager[4];
-  TLC59116 &panel3 = tlcmanager[5];
-};
-
-struct ledd leddmanager;
-
-
-//init joystick
-Joystick_ joystick(JOYSTICK_DEFAULT_REPORT_ID,JOYSTICK_TYPE_JOYSTICK,
-  70, 2,              //button count, hat switch count
-  true,true,false,    //X(roll), Y(pitch), Z
-  true,true,true,  //Rx(dimmer), Ry(gtn1 vol), Rz(gtn2 vol)
-  true,true,          //rudder(a/t), throttle(throttle)
-  true,true,false  //accelerator(collective), brake(rotor brake), steering
-  );
-
-
-
-
-//type of input for every pin on each ioex
-//0 for unused/NYI, 1 for momentary, 2 for toggle, 3 for encoder phase A, 4 for encoder phase B.
-//Hats are handled elsewhere, so they get a 0
-struct struct_ioex_type { //struct to ease passing through functions
-  byte cyclic[16];
-  byte collective[16];
-  byte panel1[16];
-  byte panel2[16];
-  byte panel3[16];
-  byte overhead1[16];
-  byte overhead2[16];
-  byte overhead3[16];
-};
-
-const struct struct_ioex_type ioex_input_types {
-  {1,1,1,1,1,0,0,0,0,1,0,0,0,0,0,0}, //cyclic
-  {1,1,2,2,1,0,0,0,0,1,0,0,0,0,0,0}, //collective
-  {2,1,1,1,1,1,1,1,3,4,3,4,3,4,1,1}, //panel1
-  {1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0}, //panel2
-  {1,1,1,3,4,3,4,1,1,1,1,3,4,3,4,1}, //panel3
-  {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2}, //overhead1
-  {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2}, //overhead2
-  {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2}  //overhead3
-};
-
-
-
-
-struct struct_ioex_values { //struct to ease passing through functions, used to store read values
-  unsigned int cyclic;
-  unsigned int collective;
-  unsigned int panel1;
-  unsigned int panel2;
-  unsigned int panel3;
-  unsigned int overhead1;
-  unsigned int overhead2;
-  unsigned int overhead3;
-};
-
-struct struct_ioex_values ioex_input_values {0,0,0,0,0,0,0,0}; //init at 0
 
 
 
@@ -180,6 +154,31 @@ struct struct_encoder_data {
 };
 
 struct struct_encoder_data encoder_data;
+
+
+
+
+TLC59116Manager tlcmanager(Wire, i2c_speed);
+
+struct ledd {
+  TLC59116 &panel1 = tlcmanager[3];
+  TLC59116 &panel2 = tlcmanager[4];
+  TLC59116 &panel3 = tlcmanager[5];
+};
+
+struct ledd leddmanager;
+
+
+
+
+//init joystick
+Joystick_ joystick(JOYSTICK_DEFAULT_REPORT_ID,JOYSTICK_TYPE_JOYSTICK,
+  70, 2,              //button count, hat switch count
+  true,true,false,    //X(roll), Y(pitch), Z
+  true,true,true,  //Rx(dimmer), Ry(gtn1 vol), Rz(gtn2 vol)
+  true,true,          //rudder(a/t), throttle(throttle)
+  true,true,false  //accelerator(collective), brake(rotor brake), steering
+  );
 
 
 
@@ -264,14 +263,14 @@ int hat_direction(int input_array[]) {
 
 
 bool read_all_digitals() {  //invert due to pullups
-  ioex_input_values.cyclic =     ~ioexmanager.cyclic.readGPIOAB();
-  ioex_input_values.collective = ~ioexmanager.collective.readGPIOAB();
-  ioex_input_values.panel1 =     ~ioexmanager.panel1.readGPIOAB();
-  ioex_input_values.panel2 =     ~ioexmanager.panel2.readGPIOAB();
-  ioex_input_values.panel3 =     ~ioexmanager.panel3.readGPIOAB();
-  ioex_input_values.overhead1 =  ~ioexmanager.overhead1.readGPIOAB();
-  ioex_input_values.overhead2 =  ~ioexmanager.overhead2.readGPIOAB();
-  ioex_input_values.overhead3 =  ~ioexmanager.overhead3.readGPIOAB();
+  ioexmanager.values.cyclic =     ~ioexmanager.cyclic.readGPIOAB();
+  ioexmanager.values.collective = ~ioexmanager.collective.readGPIOAB();
+  ioexmanager.values.panel1 =     ~ioexmanager.panel1.readGPIOAB();
+  ioexmanager.values.panel2 =     ~ioexmanager.panel2.readGPIOAB();
+  ioexmanager.values.panel3 =     ~ioexmanager.panel3.readGPIOAB();
+  ioexmanager.values.overhead1 =  ~ioexmanager.overhead1.readGPIOAB();
+  ioexmanager.values.overhead2 =  ~ioexmanager.overhead2.readGPIOAB();
+  ioexmanager.values.overhead3 =  ~ioexmanager.overhead3.readGPIOAB();
   return true;  //if something goes wrong, might return false and we can use that to go to safe mode
 };
 
@@ -295,18 +294,18 @@ void test_mode() {
   //get highest digital input pin number
   static unsigned long all_digital_inputs_a = 0; //read LS 32 inputs
   all_digital_inputs_a = (
-    (ioex_input_values.panel2<<24) +
-    (ioex_input_values.panel1<<16) +
-    (ioex_input_values.collective<<8) +
-    (ioex_input_values.cyclic)
+    (ioexmanager.values.panel2<<24) +
+    (ioexmanager.values.panel1<<16) +
+    (ioexmanager.values.collective<<8) +
+    (ioexmanager.values.cyclic)
   );
 
   static unsigned long all_digital_inputs_b = 0; //read MS 32 inputs
   all_digital_inputs_b = (
-    (ioex_input_values.overhead3<<24) +
-    (ioex_input_values.overhead2<<16) +
-    (ioex_input_values.overhead1<<8) +
-    (ioex_input_values.panel3)
+    (ioexmanager.values.overhead3<<24) +
+    (ioexmanager.values.overhead2<<16) +
+    (ioexmanager.values.overhead1<<8) +
+    (ioexmanager.values.panel3)
   );
   
   unsigned int highest_input = 0; //run through MS inputs, bit by bit, to find first high input
@@ -442,9 +441,9 @@ void loop() {
     for ( byte i = 0; i < 16; i++) {
 
       //if momentary
-      if (ioex_input_types.cyclic[i] = 1) {
+      if (ioexmanager.types.cyclic[i] = 1) {
         //set next joystick button to state of input 
-        Joystick.setButton(button_i, bitRead(ioex_input_values.cyclic, i));
+        Joystick.setButton(button_i, bitRead(ioexmanager.values.cyclic, i));
         button_i++;
       };
 
@@ -454,11 +453,11 @@ void loop() {
 
       
       //if toggle
-      else if (ioex_input_types.cyclic[i] = 2) {
+      else if (ioexmanager.types.cyclic[i] = 2) {
         
         if                                                        //switch on, change
         (!toggle_data.state[i])                                   //state         0  
-        && (bitRead(ioex_input_values.cylic, i))                  //input         1
+        && (bitRead(ioexmanager.values.cylic, i))                  //input         1
         && (current_millis - toggle_data.timer[i] > 0) {          //past timer    1
             
           toggle_data.timer[i] = current_millis + toggle_time;    //set timer
@@ -468,14 +467,14 @@ void loop() {
 
         } else if                                                 //switch on, ready for release/already released
         (toggle_data.state[i])                                    //state         1 
-        && (bitRead(ioex_input_values.cylic, i))                  //input         1
+        && (bitRead(ioexmanager.values.cylic, i))                  //input         1
         && (current_millis - toggle_data.timer[i] > 0) {          //past timer    1
           
           joystick.releaseButton(button_i);                       //send [on] release
 
         } else if                                                 //switch off, change
         (toggle_data.state[i])                                    //state         1
-        && (!bitRead(ioex_input_values.cyclic, i))                //input         0
+        && (!bitRead(ioexmanager.values.cyclic, i))                //input         0
         && (current_millis - toggle_data.timer[i + 128] > 0) {    //past timer    1
 
           toggle_data.timer[i + 128] = current_millis + toggle_time; //set timer
@@ -484,7 +483,7 @@ void loop() {
             
         } else if                                                 //switch off, ready for release
         (!toggle_data.state[i])                                   //state         0
-        && (!bitRead(ioex_input_values.cyclic, i))                //input         0
+        && (!bitRead(ioexmanager.values.cyclic, i))                //input         0
         && (current_millis - toggle_data.timer[i + 128] > 0) {    //past timer    1
 
           joystick.releaseButton(button_i + 1);                          //send [off] release
@@ -501,13 +500,13 @@ void loop() {
 
 
       //if encoder
-      else if (ioex_input_types.cyclic[i] = 3) {
+      else if (ioexmanager.types.cyclic[i] = 3) {
 
         //if phaseA != previous state
-        if (bitRead(ioex_input_values.cyclic, i) != bitRead(encoder_data.state[i], 0)) {
+        if (bitRead(ioexmanager.values.cyclic, i) != bitRead(encoder_data.state[i], 0)) {
 
           //if phaseB != phaseA
-          if (bitRead(ioex_input_values.cyclic, i + 1) != bitRead(encoder_data.state[i], 0)) {
+          if (bitRead(ioexmanager.values.cyclic, i + 1) != bitRead(encoder_data.state[i], 0)) {
 
             //send increment press
             if (!encoder_data.state[i]) {
@@ -553,20 +552,20 @@ void loop() {
 
     //hat switches
     static int cyclic_hat_array[4] {
-      bitRead(ioex_input_values.cyclic, 5), //up
-      bitRead(ioex_input_values.cyclic, 6), //right
-      bitRead(ioex_input_values.cyclic, 8), //down
-      bitRead(ioex_input_values.cyclic, 7) //left
+      bitRead(ioexmanager.values.cyclic, 5), //up
+      bitRead(ioexmanager.values.cyclic, 6), //right
+      bitRead(ioexmanager.values.cyclic, 8), //down
+      bitRead(ioexmanager.values.cyclic, 7) //left
     };
 
     joystick.setHatSwitch(0, hat_direction(cyclic_hat_array));
 
 
     static int collective_hat_array[4] {
-      bitRead(ioex_input_values.collective, 5), //up
-      bitRead(ioex_input_values.collective, 6), //right
-      bitRead(ioex_input_values.collective, 8), //down
-      bitRead(ioex_input_values.collective, 7)  //left
+      bitRead(ioexmanager.values.collective, 5), //up
+      bitRead(ioexmanager.values.collective, 6), //right
+      bitRead(ioexmanager.values.collective, 8), //down
+      bitRead(ioexmanager.values.collective, 7)  //left
     };
 
     joystick.setHatSwitch(1, hat_direction(collective_hat_array));
