@@ -188,6 +188,41 @@ int& get_ioex_values_by_index(byte index) {
 
 
 
+int& get_ioex_types_by_index(byte index) {
+  switch(index) {
+    case 0:
+      return ioexmanager.types.cyclic;
+      break;
+    case 1:
+      return ioexmanager.types.collective;
+      break;
+    case 2:
+      return ioexmanager.types.panel1;
+      break;
+    case 3:
+      return ioexmanager.types.panel2;
+      break;
+    case 4:
+      return ioexmanager.types.panel3;
+      break;
+    case 5:
+      return ioexmanager.types.overhead1;
+      break;
+    case 6:
+      return ioexmanager.types.overhead2;
+      break;
+    case 7:
+      return ioexmanager.types.overhead3;
+      break;
+    default:
+      return ioexmanager.types.cyclic;
+      break;
+  };
+};
+
+
+
+
 struct struct_toggle_data {
   bool state[128];
   unsigned long timer[256];
@@ -479,8 +514,10 @@ void loop() {
       //run through all inputs of the ioex, checking against input type
       for ( byte i = 0; i < 16; i++) {
 
+        byte ioex_types = get_ioex_types_by_index(i);
+
         //if momentary
-        if (ioex_values[i] = 1) { //TODO: change to grab input type, not value
+        if (ioex_types[i] = 1) {
           //set next joystick button to state of input 
           Joystick.setButton(button_i, bitRead(ioex_values, i));
           button_i++;
@@ -492,7 +529,7 @@ void loop() {
 
         
         //if toggle
-        else if (ioex_values[i] = 2) {
+        else if (ioex_types[i] = 2) {
           
           if                                                        //switch on, change
           (!toggle_data.state[i])                                   //state         0  
@@ -539,7 +576,7 @@ void loop() {
 
 
         //if encoder
-        else if (ioex_values[i] = 3) {
+        else if (ioex_types[i] = 3) {
 
           //if phaseA != previous state
           if (bitRead(ioex_values, i) != bitRead(encoder_data.state[i], 0)) {
