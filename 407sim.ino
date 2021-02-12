@@ -37,18 +37,46 @@
 
 
 
-struct anex {
+struct anex {  //define
   Adafruit_ADS1015 cyclic;
   Adafruit_ADS1015 collective;
   Adafruit_ADS1015 panel;
   Adafruit_ADS1015 overhead;
+
+  struct struct_anex_values {  //stores analog input values
+    int cyclic[4];
+    int collective[4];
+    int panel[4];
+    int overhead[4];
+  };
+
+  struct struct_anex_values values { //init to zero
+    {0,0,0,0},
+    {0,0,0,0},
+    {0,0,0,0},
+    {0,0,0,0}
+  };
 };
 
-struct anex anexmanager{
+struct anex anexmanager{  //initialize
   Adafruit_ADS1015(addr_anex_cyclic),
   Adafruit_ADS1015(addr_anex_collective),
   Adafruit_ADS1015(addr_anex_panel),
   Adafruit_ADS1015(addr_anex_overhead)
+};
+
+
+bool read_all_analogs() {  //sets global anexmanager.values struct
+  anexmanager.values.cyclic[0] =       anexmanager.cyclic.readADC_SingleEnded(0);     //pitch
+  anexmanager.values.cyclic[1] =       anexmanager.cyclic.readADC_SingleEnded(1);     //roll
+  anexmanager.values.collective[0] =   anexmanager.collective.readADC_SingleEnded(0); //collective
+  anexmanager.values.collective[1] =   anexmanager.collective.readADC_SingleEnded(1); //throttle
+  anexmanager.values.panel[0] =        anexmanager.panel.readADC_SingleEnded(0);      //antitorque
+  anexmanager.values.panel[1] =        anexmanager.panel.readADC_SingleEnded(1);      //gtn1 vol
+  anexmanager.values.panel[2] =        anexmanager.panel.readADC_SingleEnded(2);      //gtn2 vol
+  anexmanager.values.overhead[0] =     anexmanager.overhead.readADC_SingleEnded(0);   //instrument dimmer
+  anexmanager.values.overhead[1] =     anexmanager.overhead.readADC_SingleEnded(1);   //rotor brake
+  return true;  //if something goes wrong, might return false and we can use that to go to safe mode
 };
 
 
@@ -89,21 +117,6 @@ Joystick_ joystick(JOYSTICK_DEFAULT_REPORT_ID,JOYSTICK_TYPE_JOYSTICK,
   true,true,          //rudder(a/t), throttle(throttle)
   true,true,false  //accelerator(collective), brake(rotor brake), steering
   );
-
-
-struct struct_anex_values {  //stores analog input values
-  int cyclic[4];
-  int collective[4];
-  int panel[4];
-  int overhead[4];
-};
-
-struct struct_anex_values anex_input_values { //init to zero
-  {0,0,0,0},
-  {0,0,0,0},
-  {0,0,0,0},
-  {0,0,0,0}
-};
 
 
 
@@ -250,22 +263,6 @@ int hat_direction(int input_array[]) {
 
 
 
-bool read_all_analogs() {  //sets global anex_input_values struct
-  anex_input_values.cyclic[0] =       anexmanager.cyclic.readADC_SingleEnded(0);     //pitch
-  anex_input_values.cyclic[1] =       anexmanager.cyclic.readADC_SingleEnded(1);     //roll
-  anex_input_values.collective[0] =   anexmanager.collective.readADC_SingleEnded(0); //collective
-  anex_input_values.collective[1] =   anexmanager.collective.readADC_SingleEnded(1); //throttle
-  anex_input_values.panel[0] =        anexmanager.panel.readADC_SingleEnded(0);      //antitorque
-  anex_input_values.panel[1] =        anexmanager.panel.readADC_SingleEnded(1);      //gtn1 vol
-  anex_input_values.panel[2] =        anexmanager.panel.readADC_SingleEnded(2);      //gtn2 vol
-  anex_input_values.overhead[0] =     anexmanager.overhead.readADC_SingleEnded(0);   //instrument dimmer
-  anex_input_values.overhead[1] =     anexmanager.overhead.readADC_SingleEnded(1);   //rotor brake
-  return true;  //if something goes wrong, might return false and we can use that to go to safe mode
-};
-
-
-
-
 bool read_all_digitals() {  //invert due to pullups
   ioex_input_values.cyclic =     ~ioexmanager.cyclic.readGPIOAB();
   ioex_input_values.collective = ~ioexmanager.collective.readGPIOAB();
@@ -346,19 +343,19 @@ void test_mode() {
   
   //set second 8 lights to reflect pwm values of analog axes
   byte pwm_values_a[8] = {
-    map(anex_input_values.cyclic[0],      -2048,2048,0,255), //pitch
-    map(anex_input_values.cyclic[1],      -2048,2048,0,255), //roll
-    map(anex_input_values.collective[0],  -2048,2048,0,255), //collective
-    map(anex_input_values.collective[1],  -2048,2048,0,255), //throttle
-    map(anex_input_values.panel[0],       -2048,2048,0,255), //antitorque
-    map(anex_input_values.panel[1],       -2048,2048,0,255), //gtn1 vol
-    map(anex_input_values.panel[2],       -2048,2048,0,255), //gtn2 vol
-    map(anex_input_values.overhead[0],    -2048,2048,0,255)  //instrument dimmer
+    map(anexmanager.values.cyclic[0],      -2048,2048,0,255), //pitch
+    map(anexmanager.values.cyclic[1],      -2048,2048,0,255), //roll
+    map(anexmanager.values.collective[0],  -2048,2048,0,255), //collective
+    map(anexmanager.values.collective[1],  -2048,2048,0,255), //throttle
+    map(anexmanager.values.panel[0],       -2048,2048,0,255), //antitorque
+    map(anexmanager.values.panel[1],       -2048,2048,0,255), //gtn1 vol
+    map(anexmanager.values.panel[2],       -2048,2048,0,255), //gtn2 vol
+    map(anexmanager.values.overhead[0],    -2048,2048,0,255)  //instrument dimmer
   };
 
   //set following 1 light for remaining axis
   byte pwm_values_b[1] = {
-    map(anex_input_values.overhead[1],    -2048,2048,0,255)  //rotor brake
+    map(anexmanager.values.overhead[1],    -2048,2048,0,255)  //rotor brake
   };
 
   //set following lights for analog inputs
@@ -385,19 +382,19 @@ void safe_mode() {
   //will be extinguished.
 
 
-  //read
-  anex_input_values.cyclic[0] =       anexmanager.cyclic.readADC_SingleEnded(0);     //pitch
-  anex_input_values.cyclic[1] =       anexmanager.cyclic.readADC_SingleEnded(1);     //roll
-  anex_input_values.collective[0] =   anexmanager.collective.readADC_SingleEnded(0); //collective
-  anex_input_values.collective[1] =   anexmanager.collective.readADC_SingleEnded(1); //throttle
-  anex_input_values.panel[0] =        anexmanager.panel.readADC_SingleEnded(0);      //antitorque
+  //read (do this directly instead of using function so we can focus on only the necessary axes)
+  anexmanager.values.cyclic[0] =       anexmanager.cyclic.readADC_SingleEnded(0);     //pitch
+  anexmanager.values.cyclic[1] =       anexmanager.cyclic.readADC_SingleEnded(1);     //roll
+  anexmanager.values.collective[0] =   anexmanager.collective.readADC_SingleEnded(0); //collective
+  anexmanager.values.collective[1] =   anexmanager.collective.readADC_SingleEnded(1); //throttle
+  anexmanager.values.panel[0] =        anexmanager.panel.readADC_SingleEnded(0);      //antitorque
   
   //output
-  joystick.setYAxis                   (anex_input_values.cyclic[0]);
-  joystick.setXAxis                   (anex_input_values.cyclic[1]);
-  joystick.setRudder                  (anex_input_values.collective[0]);
-  joystick.setThrottle                (anex_input_values.collective[1]);
-  joystick.setAccelerator             (anex_input_values.panel[0]);
+  joystick.setYAxis                   (anexmanager.values.cyclic[0]);
+  joystick.setXAxis                   (anexmanager.values.cyclic[1]);
+  joystick.setRudder                  (anexmanager.values.collective[0]);
+  joystick.setThrottle                (anexmanager.values.collective[1]);
+  joystick.setAccelerator             (anexmanager.values.panel[0]);
 
   //blink fadec
   static TLC59116 &ledd_panel_2 = tlcmanager[4];
@@ -417,11 +414,11 @@ void loop() {
 
   if read_all_analogs() {
 
-    joystick.setYAxis                   (anex_input_values.cyclic[0]);
-    joystick.setXAxis                   (anex_input_values.cyclic[1]);
-    joystick.setRudder                  (anex_input_values.collective[0]);
-    joystick.setThrottle                (anex_input_values.collective[1]);
-    joystick.setAccelerator             (anex_input_values.panel[0]);
+    joystick.setYAxis                   (anexmanager.values.cyclic[0]);
+    joystick.setXAxis                   (anexmanager.values.cyclic[1]);
+    joystick.setRudder                  (anexmanager.values.collective[0]);
+    joystick.setThrottle                (anexmanager.values.collective[1]);
+    joystick.setAccelerator             (anexmanager.values.panel[0]);
 
   } else {go_to_safe_mode = true;};
 
