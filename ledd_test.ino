@@ -27,9 +27,6 @@ TLC59116Manager tlcmanager(Wire, i2c_speed);
 
 SiMessagePort* messagePort;
 
-static void new_message_callback(uint16_t message_id, struct SiMessagePortPayload* payload) {
-  //message recieved
-}
 
 struct ledd {
   TLC59116 &panel1 = tlcmanager[addr_ledd_panel1];
@@ -39,6 +36,28 @@ struct ledd {
 
 struct ledd leddmanager;
 
+static void new_message_callback(uint16_t message_id, struct SiMessagePortPayload* payload) {
+  //message recieved
+
+  int annunciator_data[3];
+
+  annunciator_data[message_id] = payload->dataint;
+  
+  switch (message_id) {
+    case 0:
+      leddmanager.panel1.on_pattern(annunciator_data[0]);
+      break;
+    case 1:
+      leddmanager.panel2.on_pattern(annunciator_data[1]);
+      break;
+    case 2:
+      leddmanager.panel3.on_pattern(annunciator_data[2]);
+      break;
+    default:
+      leddmanager.panel1.on_pattern(0xFFFF);
+    };
+  };
+};
 
 void setup() {
 
