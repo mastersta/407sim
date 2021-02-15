@@ -29,6 +29,16 @@ SiMessagePort* messagePort;
 
 static void new_message_callback(uint16_t message_id, struct SiMessagePortPayload* payload) {
   //message recieved
+
+  uint16_t annunciator_data[3];
+
+  if (message_id < 3) { //0, 1, and 2 should be annunciator data
+    annunciator_data[message_id] = payload->data_int //cast from uint_32 to uint_16 should chop off MSBs
+    leddmanager.on_pattern(annunciator_data[message_id]); //actually put it on the annunciator
+    leddmanager.off_pattern(~annunciator_data[message_id];
+  };
+    
+  }
 }
 
 struct ledd {
@@ -47,15 +57,19 @@ void setup() {
   tlcmanager.broadcast().set_milliamps(20, 1000);
 
   //messageport setup
-  messagePort = new SiMessagePort(SI_MESSAGE_PORT_DEVICE_ARDUINO_LEONARDO, SI_MESSAGE_PORT_CHANNEL_A, new_message_callback);
+  messagePort = new SiMessagePort(
+    SI_MESSAGE_PORT_DEVICE_ARDUINO_LEONARDO,  //board type
+    SI_MESSAGE_PORT_CHANNEL_A,                //channel
+    new_message_callback                      //function to call on message recieve
+  );
   
 };
 
 void loop() {
-  //TODO: SI message port API integration
+
+  //I believe this will call the new_message_callback function on reciept of a new message
   messagePort->Tick();
 
-  //super confused here
 
   //TODO: AM Gauge creation
 }
