@@ -27,12 +27,12 @@
 #define addr_ioex_overhead3 0x27
 
 //ledd = TLC59017 led driver
-#define addr_ledd_overhead1 0x60
-#define addr_ledd_overhead2 0x61
-#define addr_ledd_overhead3 0x62
-#define addr_ledd_panel1 0x63
-#define addr_ledd_panel2 0x64
-#define addr_ledd_panel3 0x65
+#define addr_ledd_panel1 0      //0x60
+#define addr_ledd_panel2 1      //0x61
+#define addr_ledd_panel3 2      //0x62
+#define addr_ledd_overhead1 3   //0x63 
+#define addr_ledd_overhead2 4   //0x64
+#define addr_ledd_overhead3 5   //0x65
 
 
 
@@ -242,15 +242,7 @@ struct struct_encoder_data encoder_data;
 
 
 
-TLC59116Manager tlcmanager(Wire, i2c_speed);
-
-struct ledd {
-  TLC59116 &panel1 = tlcmanager[3];
-  TLC59116 &panel2 = tlcmanager[4];
-  TLC59116 &panel3 = tlcmanager[5];
-};
-
-struct ledd leddmanager;
+TLC59116Manager leddmanager(Wire, i2c_speed);
 
 
 
@@ -286,8 +278,9 @@ void setup() {
   ioexmanager.overhead3.begin(addr_ioex_overhead3);
 
   //ledd setup
-  tlcmanager.init();
-  tlcmanager.broadcast().set_milliamps(20, 1000);
+  leddmanager.init();
+  leddmanager.broadcast().set_milliamps(20, 1000);
+  leddmanager.broadcast().on_pattern(0xAAAA);  //checkerboard pattern
   
 };
 
@@ -407,7 +400,7 @@ void test_mode() {
   leddmanager.panel3.group_blink(3,1,128);
 
   //set first 8 lights to represent highest input in binary
-  leddmanager.panel1.on_pattern(highest_input<<8).off_pattern(~highest_input<<8);
+  leddmanager[addr_ledd_panel1].on_pattern(highest_input<<8).off_pattern(~highest_input<<8);
   
   //set second 8 lights to reflect pwm values of analog axes
   byte pwm_values_a[8] = {
@@ -427,8 +420,8 @@ void test_mode() {
   };
 
   //set following lights for analog inputs
-  leddmanager.panel1.set_outputs(8,15,pwm_values_a);
-  leddmanager.panel1.set_outputs(0,0,pwm_values_b);
+  leddmanager[addr_ledd_panel1].set_outputs(8,15,pwm_values_a);
+  leddmanager[addr_ledd_panel1].set_outputs(0,0,pwm_values_b);
 
 
 };
@@ -436,7 +429,47 @@ void test_mode() {
 
 
 
-//===============COMPILES UP TO HERE=================//
+//gets called when a new payload is recieved from Air Manager
+static void new_message_callback(uint16_t message_id, struct SiMessagePortPayload* payload) {
+
+
+
+
+  static byte volts_pwm = 255;                          //bus volts pwm value from instrument
+  static unsigned int annunciator_data[3] = {0, 0, 0};  //binary annunciator light status
+  static byte annunciator_pwm[3][16];                   //above with pwm value applied
+
+
+  
+  
+  //0 = annunciator light status data
+  if (message_id == 0) {
+    
+    //iterate over each int32 in the payload
+    for (byte i = 0; i < 3; i++) {
+      
+      //drop into annunciator data (uint16 casted automatically)
+      annunciator_data[i] = payload->data_int[i];
+
+      //iterate over each bit, apply current bus voltage pwm value
+      for (byte j = 0; j < 16; j++) {
+        annunciator_pwm[i][j] = (bitRead(annunciator_data[i], j) * volts_pwm);
+      };
+
+      //set the outputs according to the pwm data
+      leddmanager[i].set_outputs(annunciator_pwm[i]);
+      
+    };
+     
+  //1 = bus volts pwm data
+  } else if (message_id == 1) {
+
+    //grab from payload
+    volts_pwm = payload->data_byte[0];
+
+  };
+
+};
 
 
 
@@ -460,15 +493,13 @@ void safe_mode() {
   //output
   joystick.setYAxis                   (anexmanager.values.cyclic[0]);
   joystick.setXAxis                   (anexmanager.values.cyclic[1]);
-  joystick.setRudder                  (anexmanager.values.collective[0]);
+  joystick.setAccelerator             (anexmanager.values.collective[0]);
   joystick.setThrottle                (anexmanager.values.collective[1]);
-  joystick.setAccelerator             (anexmanager.values.panel[0]);
+  joystick.setRudder             (anexmanager.values.panel[0]);
 
-  //blink fadec
-  static TLC59116 &ledd_panel_2 = tlcmanager[4];
   //blink the FADEC Fail and FADEC Degraded lights to indicate that we're in safe mode
-  ledd_panel_2.group_blink(2,1,128);
-  ledd_panel_2.group_blink(3,1,128);
+  leddmanager[addr_ledd_panel2].group_blink(2,1,128);
+  leddmanager[addr_ledd_panel2].group_blink(3,1,128);
 
 };
 
@@ -484,9 +515,9 @@ void loop() {
 
     joystick.setYAxis                   (anexmanager.values.cyclic[0]);
     joystick.setXAxis                   (anexmanager.values.cyclic[1]);
-    joystick.setRudder                  (anexmanager.values.collective[0]);
+    joystick.setAccelerator             (anexmanager.values.collective[0]);
     joystick.setThrottle                (anexmanager.values.collective[1]);
-    joystick.setAccelerator             (anexmanager.values.panel[0]);
+    joystick.setRudder                  (anexmanager.values.panel[0]);
 
   } else {go_to_safe_mode = true;};
 
@@ -646,6 +677,14 @@ void loop() {
     };
 
     joystick.setHatSwitch(1, hat_direction(collective_hat_array));
+
+
+    
+
+    //call the new_message_callback function on reciept of a new message
+    messagePort->Tick();
+
+
 
 
   } else {go_to_safe_mode = true;};
