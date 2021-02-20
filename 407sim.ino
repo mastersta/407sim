@@ -1,6 +1,7 @@
 #include <Wire.h>
 #include <TLC59116_Unmanaged.h>
 #include <TLC59116.h>
+#include <si_message_port.hpp>
 #include <Adafruit_ADS1015.h>
 #include <Adafruit_MCP23017.h>
 #include <Joystick.h>
