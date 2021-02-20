@@ -2,9 +2,15 @@
 
 id = hw_message_port_add("ARDUINO_MICRO_A", incoming_message_callback)
 
+
+
+
 function incoming_message_callback()
-  print("incoming " .. id)
+  --no current need for communication from arduino to instrument
 end
+
+
+
 
 function annunciator_callback(
   float_test,     --\
@@ -43,11 +49,10 @@ function annunciator_callback(
   instr_brt
   )
 
-  --craft the payload here
+
+
   
-  --message id = 0:
-    --ledd.panel1
-    --float test(LSB) through ~~fadec fault~~ fuel valve
+  --message id = 0:ledd.panel1
   local payload1 = 0
   
   --fadec fault                                                        + 32768
@@ -67,9 +72,10 @@ function annunciator_callback(
   if engine_fire == 1                         then payload1 = payload1 + 2 end
   if float_test == 1                          then payload1 = payload1 + 1 end
 
-  --message id = 1:
-    --ledd.panel2
-    --restart fault(LSB) through engine ovspd
+
+
+
+  --message id = 1: ledd.panel2
   local payload2 = 0
 
   --engine ovspd                                                       + 32768
@@ -94,9 +100,9 @@ function annunciator_callback(
   --restart fault                                                      + 1
 
 
-  --message id = 3:
-    --ledd.panel3
-    --cyclic centering(LSB) through rpm
+
+
+  --message id = 2: ledd.panel3
   local payload3 = 0
 
   if ((math.abs(cyclic_pitch) > 0.042
@@ -104,7 +110,10 @@ function annunciator_callback(
     and (on_ground))                          then payload3 = payload3 + 1 end
   if n1_percent[1] < 55                       then payload3 = payload3 + 2 end
   if pedal_stop == 0                          then payload3 = payload3 + 4 end
-  if (rpm[1] < 392 or rpm[1] > 442)                 then payload3 = payload3 + 8 end
+  if (rpm[1] < 392 or rpm[1] > 442)           then payload3 = payload3 + 8 end
+
+
+
 
   --AND with annunciator test
   local ffff = 65535
@@ -114,55 +123,65 @@ function annunciator_callback(
     payload3 = 15
   end
 
+
+
+
+  --convert bus volts to pwm byte value (28.4 is max expected)
   local bus_volts_map = {
     {0, 0},
     {100, 0},
     {284, 255}
   }
-  
   local bus_volts_convert = math.floor(bus_volts[1] * 10)
   local annunciator_brt = math.floor(interpolate_linear(bus_volts_map, bus_volts_convert)) -- * instr_brt[11]))
 
+
+
+
+  --send the payload to the arduino
   hw_message_port_send(id, 0, "INT[3]", {payload1, payload2, payload3})
   hw_message_port_send(id, 1, "INT", annunciator_brt)
 
-  print(annunciator_brt)
+
 end
 
+
+
+
 xpl_dataref_subscribe(
-  "sim/test/test_float",                            "FLOAT",  --float test
-  "sim/cockpit/warnings/annunciators/engine_fire",  "INT",  --engine fire
-  "sim/cockpit/switches/anti_ice_inlet_heat",       "INT",  --engine anti-ice
-  "B407/Float_Arm",                                 "FLOAT",  --float arm
-  "sim/cockpit/warnings/annunciators/auto_ignition","INT",  --auto relight
-  "sim/flightmodel2/engines/starter_is_running",    "INT[8]",  --start
-  "B407/Baggage",                                   "FLOAT",--baggage door (>0 = on)
-  "sim/cockpit2/fuel/fuel_tank_pump_on",            "INT[8]",  --lfuel boost
-  "B407/Overhead/Swt_BoostXFR_Left",                "FLOAT",  --lfuel xfer
-  "sim/cockpit2/fuel/fuel_tank_pump_on",            "INT[8]",  --rfuel boost
-  "B407/Overhead/Swt_BoostXFR_Right",               "FLOAT",  --rfuel xfer
-  "B407/FuelValveMoving",                           "FLOAT",  --fuel valve
-  "sim/cockpit2/annunciators/fuel_quantity",        "INT",  --fuel low
-  "sim/operation/failures/rel_fadec_0",             "INT",  --fadec fail (6=fail)
-  "B407/Fadec",                                     "FLOAT",  --manual fadec (0=manual = on)
-  "sim/cockpit2/annunciators/chip_detect",          "INT",  --engine chip
-  "sim/operation/failures/rel_trotor",              "INT",  --t/r chip (6=fail)
-  "sim/cockpit2/annunciators/generator",            "INT",  --gen fail
-  "B407/Panel/XMsn_Oil_Psi",                        "FLOAT",--xmsn oil press (<3.3 = fail)
-  "B407/Panel/Exceedance/MGT",                      "FLOAT",--check instr...
-  "B407/Panel/Exceedance/NG",                       "FLOAT",--...(any of these three...
-  "B407/Panel/Exceedance/TRQ",                      "FLOAT",--...>0 = fail)
-  "sim/cockpit/electrical/gpu_on",                  "INT",  --battery rly
-  "B407/Panel/XMsn_Oil_C",                          "FLOAT",--xmsn oil temp (>11 = fail)
-  "sim/operation/failures/hydraulic_pressure_ratio","FLOAT",--hydraulic system (<650 = fail)
-  "B407/Controls/Pitch",                            "FLOAT",--cyclic centering (<.042 AND...
-  "B407/Controls/Roll",                             "FLOAT",--...<.068 = on)...
-  "sim/flightmodel/failures/onground_any",          "INT",  --...AND is on the ground
-  "sim/flightmodel2/engines/N1_percent",         "FLOAT[8]",--engine out (<55 = fail)
-  "B407/PedalStop",                                 "FLOAT",  --pedal stop (0 = fail)
-  "sim/cockpit2/engine/indicators/prop_speed_rpm","FLOAT[8]",--rpm (392<x<442)
-  "sim/cockpit/warnings/annunciator_test_pressed",  "INT",  --annunciator test
-  "sim/cockpit2/electrical/bus_volts",              "FLOAT[8]", --bus volts
-  "sim/cockpit2/switches/instrument_brightness_ratio","FLOAT[32]", --instr brt
+  "sim/test/test_float",                                "FLOAT",    --float test
+  "sim/cockpit/warnings/annunciators/engine_fire",      "INT",      --engine fire
+  "sim/cockpit/switches/anti_ice_inlet_heat",           "INT",      --engine anti-ice
+  "B407/Float_Arm",                                     "FLOAT",    --float arm
+  "sim/cockpit/warnings/annunciators/auto_ignition",    "INT",      --auto relight
+  "sim/flightmodel2/engines/starter_is_running",        "INT[8]",   --start
+  "B407/Baggage",                                       "FLOAT",    --baggage door (>0 = on)
+  "sim/cockpit2/fuel/fuel_tank_pump_on",                "INT[8]",   --lfuel boost
+  "B407/Overhead/Swt_BoostXFR_Left",                    "FLOAT",    --lfuel xfer
+  "sim/cockpit2/fuel/fuel_tank_pump_on",                "INT[8]",   --rfuel boost
+  "B407/Overhead/Swt_BoostXFR_Right",                   "FLOAT",    --rfuel xfer
+  "B407/FuelValveMoving",                               "FLOAT",    --fuel valve
+  "sim/cockpit2/annunciators/fuel_quantity",            "INT",      --fuel low
+  "sim/operation/failures/rel_fadec_0",                 "INT",      --fadec fail (6=fail)
+  "B407/Fadec",                                         "FLOAT",    --manual fadec (0=manual = on)
+  "sim/cockpit2/annunciators/chip_detect",              "INT",      --engine chip
+  "sim/operation/failures/rel_trotor",                  "INT",      --t/r chip (6=fail)
+  "sim/cockpit2/annunciators/generator",                "INT",      --gen fail
+  "B407/Panel/XMsn_Oil_Psi",                            "FLOAT",    --xmsn oil press (<3.3 = fail)
+  "B407/Panel/Exceedance/MGT",                          "FLOAT",    --check instr...
+  "B407/Panel/Exceedance/NG",                           "FLOAT",    --...(any of these three...
+  "B407/Panel/Exceedance/TRQ",                          "FLOAT",    --...>0 = fail)
+  "sim/cockpit/electrical/gpu_on",                      "INT",      --battery rly
+  "B407/Panel/XMsn_Oil_C",                              "FLOAT",    --xmsn oil temp (>11 = fail)
+  "sim/operation/failures/hydraulic_pressure_ratio",    "FLOAT",    --hydraulic system (<650 = fail)
+  "B407/Controls/Pitch",                                "FLOAT",    --cyclic centering (<.042 AND...
+  "B407/Controls/Roll",                                 "FLOAT",    --...<.068 = on)...
+  "sim/flightmodel/failures/onground_any",              "INT",      --...AND is on the ground
+  "sim/flightmodel2/engines/N1_percent",                "FLOAT[8]", --engine out (<55 = fail)
+  "B407/PedalStop",                                     "FLOAT",    --pedal stop (0 = fail)
+  "sim/cockpit2/engine/indicators/prop_speed_rpm",      "FLOAT[8]", --rpm (392<x<442)
+  "sim/cockpit/warnings/annunciator_test_pressed",      "INT",      --annunciator test
+  "sim/cockpit2/electrical/bus_volts",                  "FLOAT[8]", --bus volts
+  "sim/cockpit2/switches/instrument_brightness_ratio",  "FLOAT[32]",--instr brt
   annunciator_callback
 )
