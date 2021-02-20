@@ -26,40 +26,49 @@ SiMessagePort* messagePort;
 
 static void new_message_callback(uint16_t message_id, struct SiMessagePortPayload* payload) {
   //message recieved
+  static byte volts_pwm = 255;
+  static unsigned int annunciator_data[3] = {0, 0, 0};
+  static byte annunciator_pwm[3][16];
+  
+  
+  if (message_id == 0) {
+    
+    for (byte i = 0; i < 3; i++) {
+      annunciator_data[i] = payload->data_int[i];
+//      messagePort->DebugMessage(SI_MESSAGE_PORT_LOG_LEVEL_INFO, (String)annunciator_data[i]);
+//      tlcmanager[i].on_pattern(annunciator_data[i]);
+//      tlcmanager[i].off_pattern(~annunciator_data[i]);
 
-  uint16_t annunciator_data[3];
+      for (byte j = 0; j < 16; j++) {
+        byte holder = bitRead(annunciator_data[i], j);
+        annunciator_pwm[i][j] = (holder * volts_pwm);
+      };
 
-  if (message_id == 0) { //0, 1, and 2 should be annunciator data
-    annunciator_data[message_id] = payload->data_int; //cast from uint_32 to uint_16 should chop off MSBs
-    leddmanager.panel1.on_pattern(annunciator_data[message_id]); //actually put it on the annunciator
-    leddmanager.panel1.off_pattern(~annunciator_data[message_id]);
+      tlcmanager[i].set_outputs(annunciator_pwm[i]);
+      
+    };
     
   } else if (message_id == 1) {
-    annunciator_data[message_id] = payload->data_int; //cast from uint_32 to uint_16 should chop off MSBs
-    leddmanager.panel2.on_pattern(annunciator_data[message_id]); //actually put it on the annunciator
-    leddmanager.panel2.off_pattern(~annunciator_data[message_id]);
-    
-  } else if (message_id == 2) {
-    
-    annunciator_data[message_id] = payload->data_int; //cast from uint_32 to uint_16 should chop off MSBs
-    leddmanager.panel3.on_pattern(annunciator_data[message_id]); //actually put it on the annunciator
-    leddmanager.panel3.off_pattern(~annunciator_data[message_id]);
+    volts_pwm = payload->data_byte[0];
   };
+
 };
 
 
 void setup() {
-
+  
   //ledd setup
   tlcmanager.init();
   tlcmanager.broadcast().set_milliamps(20, 1000);
+  tlcmanager.broadcast().on_pattern(0xAAAA);
 
   //messageport setup
   messagePort = new SiMessagePort(
-    SI_MESSAGE_PORT_DEVICE_ARDUINO_LEONARDO,  //board type
+    SI_MESSAGE_PORT_DEVICE_ARDUINO_MICRO,  //board type
     SI_MESSAGE_PORT_CHANNEL_A,                //channel
     new_message_callback                      //function to call on message recieve
   );
+
   
 };
 
@@ -67,7 +76,6 @@ void loop() {
 
   //I believe this will call the new_message_callback function on reciept of a new message
   messagePort->Tick();
+  delay(1);
 
-
-  //TODO: AM Gauge creation
 }
