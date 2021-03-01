@@ -6,7 +6,45 @@ id = hw_message_port_add("ARDUINO_MICRO_A", incoming_message_callback)
 
 
 function incoming_message_callback()
-  --no current need for communication from arduino to instrument
+  --incoming message will be array of ints (16 -> 32?)
+  --iterate over array, compare to previous state
+  --if change, send appropriate XP command
+  
+  --cyclic:
+  --0/0 trigger (NYI) EXAMPLE OF MOMENTARY
+  xpl_command("test/command/here", ((payload[0] >> 0) & 1) == 1)
+  --0/1 left soft
+  --0/2 right soft
+  --0/3 force trim
+  --0/4 pinky
+  --0/5 hat up
+  --0/6 hat right
+  --0/7 hat left
+  --0/8 hat down
+  --0/9 hat push
+  
+  --collective:
+  --1/0 starter eng EXAMPLE OF TOGGLE
+  if has_changed(payload[0][0]) then
+    xpl_command("sim/engines/engage_starters",1)
+    timer_start(100, xpl_command("sim/engines/engage_starters",0))
+  end
+  --1/1 starter diseng
+  --1/2 ldg light off
+  --1/3 ldg light both [off state = ldg light on]
+  --1/4 idle stop
+  --1/5 hat up
+  --1/6 hat right
+  --1/7 hat left
+  --1/8 hat down
+  --1/9 hat push
+end
+
+
+
+
+function has_changed(ioex_num, input_num)
+
 end
 
 
@@ -185,3 +223,5 @@ xpl_dataref_subscribe(
   "sim/cockpit2/switches/instrument_brightness_ratio",  "FLOAT[32]",--instr brt
   annunciator_callback
 )
+
+
