@@ -23,6 +23,7 @@
 
 
 
+
 //setup tlcmanager
 TLC59116Manager tlcmanager(Wire, i2c_speed);
 
@@ -30,33 +31,60 @@ TLC59116Manager tlcmanager(Wire, i2c_speed);
 SiMessagePort* messagePort;
 
 
+
+
+/*-------------------------------------------------------------
+
+WATCHDOG TIMER
+Due to occasional locking up of the main loop during repeated
+signals sent to the annunciator, a WDT has been set up to
+attempt to clear the i2c bus and restore functionality.
+
+-------------------------------------------------------------*/
 void watchdogSetup(void) {
   cli();
   wdt_reset();
-  WDTCSR |= (1<<WDCE) | (1<<WDE);
+  //interrupt enabled, reset disabled, 250ms
   WDTCSR = 0b01011100;
   sei();
 }
 
+//called when the watchdog timer elapses without reset
 ISR(WDT_vect) {
-  digitalWrite(17, HIGH);
-  digitalWrite(30, HIGH);
 
   pinMode(3, OUTPUT);
 
+  //pulse the clock line 10 times to attempt to clear a hung bus
   for (byte i = 0; i < 10; i++) {
     digitalWrite(3,LOW);
     digitalWrite(3,HIGH);
   };
-}
 
-//gets called when a new payload is recieved from the instrument
+};
+
+
+
+
+/*-------------------------------------------------------------
+
+AIR MANAGER CALLBACK FUNCTION
+When `Tick()` is called in the main loop, and a fresh payload
+is ready from Air Manager, this function is called. It splits
+the payload into ints (casting from the 32 bits recieved into
+16 bits), applies the pwm value for brightness to each of them,
+and then sends it to the LED drivers.
+
+Only one of the drivers will update at a time, to help avoid
+overwhelming them and locking up the bus. This is a workaround
+and may be removed when a real solution is found to the issue.
+
+-------------------------------------------------------------*/
 static void new_message_callback(uint16_t message_id, struct SiMessagePortPayload* payload) {
 
-  static int volts_pwm = 255;                          //bus volts pwm value from instrument
+  static int volts_pwm = 255;                           //bus volts pwm value from instrument
   static unsigned int annunciator_data[3] = {0, 0, 0};  //binary annunciator light status
   static byte annunciator_pwm[3][16];                   //above with pwm value applied
-  static byte counter = 0;
+  static byte counter = 0;                              //counts from 0-2 to cycle which driver to update
 
   //0 = annunciator light status data
   if (message_id == 0) {
@@ -81,6 +109,7 @@ static void new_message_callback(uint16_t message_id, struct SiMessagePortPayloa
 
   };
 
+  //increments the counter and wraps it back to zero if necessary
   counter++;
   if (counter == 3) { counter = 0; };
 
@@ -89,6 +118,11 @@ static void new_message_callback(uint16_t message_id, struct SiMessagePortPayloa
 
 
 
+/*-------------------------------------------------------------
+
+JOYSTICK CONFIGURATION
+
+-------------------------------------------------------------*/
 Joystick_ joystick(
   JOYSTICK_DEFAULT_REPORT_ID,
   JOYSTICK_TYPE_JOYSTICK,
@@ -107,6 +141,14 @@ Joystick_ joystick(
   false  //steering
 );
 
+
+
+
+/*-------------------------------------------------------------
+
+ANALOG EXPANDER SETUP
+
+-------------------------------------------------------------*/
 struct anex {  //define
   Adafruit_ADS1015 cyclic = Adafruit_ADS1015(addr_anex_cyclic);
   Adafruit_ADS1015 collective = Adafruit_ADS1015(addr_anex_collective);
@@ -133,20 +175,20 @@ struct anex anexmanager{}; //initialize
 
 
 
+/*-------------------------------------------------------------
+
+SETUP
+
+-------------------------------------------------------------*/
 void setup() {
 
+  //calls the WDT setup function
   watchdogSetup();
   
-  pinMode(17, OUTPUT);
-  pinMode(30, OUTPUT);
-  digitalWrite(17, HIGH);
-  digitalWrite(30, HIGH);
-
   //tlc init 
   tlcmanager.init();
   tlcmanager.broadcast().set_milliamps(20, 1000);
   tlcmanager.broadcast().on_pattern(0xAAAA);  //checkerboard pattern
-  //tlcmanager.broadcast().on_pattern(0xFFFF);  //all lit
 
   //messageport setup
   messagePort = new SiMessagePort(
@@ -155,6 +197,7 @@ void setup() {
     new_message_callback                      //function to call on message recieve
   );
 
+  //initialize the analog boards
   anexmanager.cyclic.begin();
   anexmanager.cyclic.setGain(GAIN_ONE);
   
@@ -164,6 +207,7 @@ void setup() {
   anexmanager.panel.begin();
   anexmanager.panel.setGain(GAIN_ONE);
   
+  //initialize the joystick
   joystick.begin(false);
 
   joystick.setXAxisRange(0,2048);
@@ -174,24 +218,37 @@ void setup() {
   
 };
 
+
+
+
+/*-------------------------------------------------------------
+
+MAIN LOOP
+
+-------------------------------------------------------------*/
 void loop() {
 
+  //reset the WDT; 250ms without reset will call the interrupt function
   wdt_reset();
 
+  //read the analog boards, store the values in the array
   anexmanager.values.cyclic[0] = anexmanager.cyclic.readADC_SingleEnded(0);
   anexmanager.values.cyclic[1] = anexmanager.cyclic.readADC_SingleEnded(1);
   anexmanager.values.collective[0] = anexmanager.collective.readADC_SingleEnded(0);
   anexmanager.values.collective[1] = anexmanager.collective.readADC_SingleEnded(1);
   anexmanager.values.panel[0] = anexmanager.panel.readADC_SingleEnded(0);
 
+  //apply the values in the array to the joystick axes
   joystick.setXAxis(anexmanager.values.cyclic[0]);
   joystick.setYAxis(anexmanager.values.cyclic[1]);
   joystick.setZAxis(anexmanager.values.collective[0]);
   joystick.setThrottle(anexmanager.values.collective[1]);
   joystick.setRudder(anexmanager.values.panel[0]);
   
+  //send the joystick data to the sim
   joystick.sendState();
 
+  //check for new payload from AM, run the callback function if new payload is ready
   messagePort->Tick();
 
 }
