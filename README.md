@@ -1,9 +1,36 @@
 # 407sim
-Resources for a home cockpit based around the Dreamfoil Bell 407 for X-Plane 11
+Resources for a two-seater home cockpit based around the Dreamfoil Bell 407 for X-Plane 11
+
+## Current State of Things
+
+**Last updated: 1 May 2021**
+
+☑ Main frame constructed 
+☑ Mainboard created 
+☑ Power supply sourced and installed
+☑ Cyclic assembly constructed 
+☑ Instrument panel constructed
+☑ Instrument panel expander board created 
+☑ Power and data lines ran 
+☑ Collective assembly constructed 
+☑ Collective expander board constructed 
+☑ Annunciator constructed 
+☑ Annunciator expander board created 
+☑ Annunciator output from sim to hardware annunciator
+☑ Primary flight controls input from hardware to analog joystick inputs
+☐ Overhead panel constructed
+☐ Overhead panel expander board created
+☐ GPS panel constructed
+☐ GPS panel expander board created
+☐ Digital hardware inputs into simulator
+
+## Overview
+
+The main frame of the cockpit is constructed from wood, with aluminum trim, plastic seats, and faux rivets. The instrument panel has a faux leather glareshield with a 3d printed and handwired annunciator panel of my own design. The seats are plastic fishing boat seats (upgrade to leather cushioned seats planned). The cyclics grips are 3d printed, and the conduit/tubing that connects them is 3/4" EMT. The conduit rides in 6702 bearings to interface with a stationary 1" PVC fitting, providing a smooth and sturdy axis on which to rotate. This setup is used for both axes of the cyclic, as well as the collective's movement. The collective head, throttle grip, and associated parts are 3d printed. The throttle has an idle stop detent. The collective's movement is dampened by a gas strut that has been depressurized. The anti-torque pedals are made of metal brackets and pipe over bolts, connected with linkages, and linked to custom 3d printed tees. The base that the pedals are mounted on is made of wood.
 
 ## Hardware
 
-This project uses custom soldered breadboard-style boards designed to allow for easy replacement of components. If an input expander takes a crap, simply yank it out and drop another one in. The addresses, input/output terminals, etc are all hardwired onto the breadboards, so all of the expander's connections remain in place. This makes repair very easy.
+This project uses custom soldered breadboard-style protoboards designed to allow for easy replacement of components. If an input expander takes a crap, simply yank it out and drop another one in. The addresses, input/output terminals, etc are all hardwired onto the breadboards, so all of the expander's connections remain in place. This makes repair very easy.
 
 The individual breadboards each have a section dedicated to connecting to and passing along the power and data busses. The input and output expanders communicate with the master board via I2C, which is a 2-wire protocol. +5v, +12v, and ground brings the total number of wires running around the cockpit to *five*, a massive improvement over my previous construction. The remote nature of the individual boards means that I/O expanders can be located very close to the hardware that they control, once again reducing the amount of wire required.
 
