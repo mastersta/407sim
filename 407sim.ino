@@ -1,9 +1,9 @@
-//ledd test only
 #include <Wire.h>
 #include <TLC59116_Unmanaged.h>
 #include <TLC59116.h>
 #include <si_message_port.hpp>
 #include <Adafruit_ADS1015.h>
+#include <Adafruit_MCP23017.h>
 #include <Joystick.h>
 #include <avr/wdt.h>
 
@@ -20,6 +20,12 @@
 #define addr_anex_collective 0x49
 #define addr_anex_panel 0x4A
 #define addr_anex_overhead 0x4B
+
+//ioex = MCP23017 digital I/O expander
+#define addr_ioex_cyclic 0x20 //do not use
+#define addr_ioex_collective 0x21
+#define addr_ioex_panel1 0x22
+#define addr_ioex_panel2 0x23
 
 
 
@@ -126,8 +132,8 @@ JOYSTICK CONFIGURATION
 Joystick_ joystick(
   JOYSTICK_DEFAULT_REPORT_ID,
   JOYSTICK_TYPE_JOYSTICK,
-  0,  //buttons
-  0,  //hats
+  6,  //buttons
+  1,  //hats
   true, //x axis [roll]
   true, //y axis [pitch]
   true, //z axis [collective]
@@ -140,6 +146,57 @@ Joystick_ joystick(
   false, //brake
   false  //steering
 );
+
+
+int hat_direction(int input_array[4]) {
+//takes in an array of the four hat switch states (up, right, down, left) (pullups)
+//outputs the degrees that the joystick library expects for the hat position
+
+  int output_array[4] = {
+    input_array[0],
+    input_array[1] * 2,
+    input_array[3] * 4, //swapped for cyclic input order
+    input_array[2] * 8
+  };
+
+  int mask = B0000;
+  for (int i = 0; i < 4; i++) {
+    mask = output_array[i] | mask;
+  };
+
+
+  switch (mask) {
+    case B0000:
+      return -1;
+      break;
+    case B0001:
+      return 0;
+      break;
+    case B0011:
+      return 45;
+      break;
+    case B0010:
+      return 90;
+      break;
+    case B0110:
+      return 135;
+      break;
+    case B0100:
+      return 180;
+      break;
+    case B1100:
+      return 225;
+      break;
+    case B1000:
+      return 270;
+      break;
+    case B1001:
+      return 315;
+      break;
+    default:
+      return -1;
+  };
+};
 
 
 
@@ -177,13 +234,42 @@ struct anex anexmanager{}; //initialize
 
 /*-------------------------------------------------------------
 
+DIGITAL EXPANDER SETUP
+
+-------------------------------------------------------------*/
+struct ioex {  //define
+  Adafruit_MCP23017 cyclic;
+  Adafruit_MCP23017 collective;
+  Adafruit_MCP23017 panel1;
+  Adafruit_MCP23017 panel2;
+
+  struct struct_ioex_values {  //stores analog input values
+    int cyclic;
+    int collective;
+    int panel1;
+    int panel2;
+  };
+
+  struct struct_ioex_values values {}; //init to 0
+};
+
+struct ioex ioexmanager{}; //initialize
+
+
+
+
+/*-------------------------------------------------------------
+
 SETUP
 
 -------------------------------------------------------------*/
 void setup() {
+  
+  pinMode(17, OUTPUT);
+  digitalWrite(17, LOW);
 
   //calls the WDT setup function
-  watchdogSetup();
+  //watchdogSetup();
   
   //tlc init 
   tlcmanager.init();
@@ -206,6 +292,19 @@ void setup() {
   
   anexmanager.panel.begin();
   anexmanager.panel.setGain(GAIN_ONE);
+
+  //initialize the digital boards
+  ioexmanager.cyclic.begin();
+  ioexmanager.collective.begin(addr_ioex_collective);
+  ioexmanager.panel1.begin(addr_ioex_panel1);
+  ioexmanager.panel2.begin(addr_ioex_panel2);
+  
+  for (byte i = 0; i < 16; i++) {
+    ioexmanager.cyclic.pullUp(i, HIGH);
+    ioexmanager.collective.pullUp(i, HIGH);
+    ioexmanager.panel1.pullUp(i, HIGH);
+    ioexmanager.panel2.pullUp(i, HIGH);
+  }
   
   //initialize the joystick
   joystick.begin(false);
@@ -215,6 +314,7 @@ void setup() {
   joystick.setZAxisRange(0,2048);
   joystick.setThrottleRange(0,2048);
   joystick.setRudderRange(0,2048);
+
   
 };
 
@@ -228,8 +328,9 @@ MAIN LOOP
 -------------------------------------------------------------*/
 void loop() {
 
+
   //reset the WDT; 250ms without reset will call the interrupt function
-  wdt_reset();
+  //wdt_reset();
 
   //read the analog boards, store the values in the array
   anexmanager.values.cyclic[0] = anexmanager.cyclic.readADC_SingleEnded(0);
@@ -244,11 +345,36 @@ void loop() {
   joystick.setZAxis(anexmanager.values.collective[0]);
   joystick.setThrottle(anexmanager.values.collective[1]);
   joystick.setRudder(anexmanager.values.panel[0]);
+
+  //read the digital boards, store the values in the array
+  ioexmanager.values.cyclic = ioexmanager.cyclic.readGPIOAB();
+  ioexmanager.values.collective = ioexmanager.collective.readGPIOAB();
+  ioexmanager.values.panel1 = ioexmanager.panel1.readGPIOAB();
+  ioexmanager.values.panel2 = ioexmanager.panel2.readGPIOAB();
+
+  //apply the cyclic momentary buttons to the joystick
+  for (byte i = 0; i < 5; i++) {
+    joystick.setButton(i, !bitRead(ioexmanager.values.cyclic, i));
+  };
+  joystick.setButton(5, !bitRead(ioexmanager.values.cyclic, 9));
+
+  
+  //apply the cyclic hat inputs to the joystick hat
+  int cyclic_hat_array[4] {};
+  for (byte i = 0; i < 4; i++) {
+    cyclic_hat_array[i] = !bitRead(ioexmanager.values.cyclic, (i + 5));
+  }
+  //Serial.println(hat_direction(cyclic_hat_array));
+  joystick.setHatSwitch(0, hat_direction(cyclic_hat_array));
+  
   
   //send the joystick data to the sim
   joystick.sendState();
 
   //check for new payload from AM, run the callback function if new payload is ready
   messagePort->Tick();
+
+  //debug to let us know the main loop is still running
+  digitalWrite(17, millis()%1000>500);
 
 }
