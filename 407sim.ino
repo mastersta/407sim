@@ -41,26 +41,26 @@ signals sent to the annunciator, a WDT has been set up to
 attempt to clear the i2c bus and restore functionality.
 
 -------------------------------------------------------------*/
-void watchdogSetup(void) {
-  cli();
-  wdt_reset();
-  //interrupt enabled, reset disabled, 250ms
-  WDTCSR = 0b01011100;
-  sei();
-}
-
-//called when the watchdog timer elapses without reset
-ISR(WDT_vect) {
-
-  pinMode(3, OUTPUT);
-
-  //pulse the clock line 10 times to attempt to clear a hung bus
-  for (byte i = 0; i < 10; i++) {
-    digitalWrite(3,LOW);
-    digitalWrite(3,HIGH);
-  };
-
-};
+//void watchdogSetup(void) {
+//  cli();
+//  wdt_reset();
+//  //interrupt enabled, reset disabled, 250ms
+//  WDTCSR = 0b01011100;
+//  sei();
+//}
+//
+////called when the watchdog timer elapses without reset
+//ISR(WDT_vect) {
+//
+//  pinMode(3, OUTPUT);
+//
+//  //pulse the clock line 10 times to attempt to clear a hung bus
+//  for (byte i = 0; i < 10; i++) {
+//    digitalWrite(3,LOW);
+//    digitalWrite(3,HIGH);
+//  };
+//
+//};
 
 
 
@@ -183,7 +183,7 @@ SETUP
 void setup() {
 
   //calls the WDT setup function
-  watchdogSetup();
+  //watchdogSetup();
   
   //tlc init 
   tlcmanager.init();
@@ -229,7 +229,7 @@ MAIN LOOP
 void loop() {
 
   //reset the WDT; 250ms without reset will call the interrupt function
-  wdt_reset();
+  //wdt_reset();
 
   //read the analog boards, store the values in the array
   anexmanager.values.cyclic[0] = anexmanager.cyclic.readADC_SingleEnded(0);
