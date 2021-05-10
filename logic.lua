@@ -1,7 +1,16 @@
 --407simV2 hardware communication instrument
 
-id = hw_message_port_add("ARDUINO_LEONARDO_A", incoming_message_callback)
+--global variables
 counter = 0
+
+function incoming_message_callback(id, payload)
+  print("data1: " .. payload[1])
+  print("data2: " .. payload[2])
+  print("data3: " .. payload[3])
+  print("data4: " .. payload[4])
+end
+
+id = hw_message_port_add("ARDUINO_LEONARDO_A", incoming_message_callback)
 
 function numtobool(input)
   if input == 0 then return false
@@ -9,9 +18,7 @@ function numtobool(input)
   end
 end
 
-function incoming_message_callback()
-  print("incoming " .. id)
-end
+
 
 function annunciator_callback(
   float_test,     --\
@@ -130,7 +137,9 @@ function annunciator_callback(
     end
   end
 
+
 end
+
 
 xpl_dataref_subscribe(
   "sim/test/test_float",                            "FLOAT",  --float test

@@ -9,6 +9,7 @@
 
 //misc defines
 #define i2c_speed 100000 //increase later after testing
+#define outgoing_delay 100
 
 //ledd = TLC59017 led driver
 #define addr_ledd_panel1 0
@@ -22,10 +23,10 @@
 #define addr_anex_overhead 0x4B
 
 //ioex = MCP23017 digital I/O expander
-#define addr_ioex_cyclic 0x20 //do not use
-#define addr_ioex_collective 0x21
-#define addr_ioex_panel1 0x22
-#define addr_ioex_panel2 0x23
+#define addr_ioex_cyclic 0 //0x20 do not use, leave blank in call
+#define addr_ioex_collective 1 //0x21
+#define addr_ioex_panel1 2 //0x22
+#define addr_ioex_panel2 3 //0x23
 
 
 
@@ -47,26 +48,26 @@ signals sent to the annunciator, a WDT has been set up to
 attempt to clear the i2c bus and restore functionality.
 
 -------------------------------------------------------------*/
-void watchdogSetup(void) {
-  cli();
-  wdt_reset();
-  //interrupt enabled, reset disabled, 250ms
-  WDTCSR = 0b01011100;
-  sei();
-}
-
-//called when the watchdog timer elapses without reset
-ISR(WDT_vect) {
-
-  pinMode(3, OUTPUT);
-
-  //pulse the clock line 10 times to attempt to clear a hung bus
-  for (byte i = 0; i < 10; i++) {
-    digitalWrite(3,LOW);
-    digitalWrite(3,HIGH);
-  };
-
-};
+//void watchdogSetup(void) {
+//  cli();
+//  wdt_reset();
+//  //interrupt enabled, reset disabled, 250ms
+//  WDTCSR = 0b01011100;
+//  sei();
+//}
+//
+////called when the watchdog timer elapses without reset
+//ISR(WDT_vect) {
+//
+//  pinMode(3, OUTPUT);
+//
+//  //pulse the clock line 10 times to attempt to clear a hung bus
+//  for (byte i = 0; i < 10; i++) {
+//    digitalWrite(3,LOW);
+//    digitalWrite(3,HIGH);
+//  };
+//
+//};
 
 
 
@@ -109,7 +110,7 @@ static void new_message_callback(uint16_t message_id, struct SiMessagePortPayloa
       };
 
       //set the outputs according to the pwm data
-      tlcmanager[counter].set_outputs(annunciator_pwm[counter]);
+      //tlcmanager[counter].set_outputs(annunciator_pwm[counter]);
       
     };
 
@@ -244,10 +245,10 @@ struct ioex {  //define
   Adafruit_MCP23017 panel2;
 
   struct struct_ioex_values {  //stores analog input values
-    int cyclic;
-    int collective;
-    int panel1;
-    int panel2;
+    uint16_t cyclic;
+    uint16_t collective;
+    uint16_t panel1;
+    uint16_t panel2;
   };
 
   struct struct_ioex_values values {}; //init to 0
@@ -297,13 +298,13 @@ void setup() {
   ioexmanager.cyclic.begin();
   ioexmanager.collective.begin(addr_ioex_collective);
   ioexmanager.panel1.begin(addr_ioex_panel1);
-  ioexmanager.panel2.begin(addr_ioex_panel2);
+  //ioexmanager.panel2.begin(addr_ioex_panel2);
   
   for (byte i = 0; i < 16; i++) {
     ioexmanager.cyclic.pullUp(i, HIGH);
     ioexmanager.collective.pullUp(i, HIGH);
     ioexmanager.panel1.pullUp(i, HIGH);
-    ioexmanager.panel2.pullUp(i, HIGH);
+    //ioexmanager.panel2.pullUp(i, HIGH);
   }
   
   //initialize the joystick
@@ -328,7 +329,6 @@ MAIN LOOP
 -------------------------------------------------------------*/
 void loop() {
 
-
   //reset the WDT; 250ms without reset will call the interrupt function
   //wdt_reset();
 
@@ -350,7 +350,7 @@ void loop() {
   ioexmanager.values.cyclic = ioexmanager.cyclic.readGPIOAB();
   ioexmanager.values.collective = ioexmanager.collective.readGPIOAB();
   ioexmanager.values.panel1 = ioexmanager.panel1.readGPIOAB();
-  ioexmanager.values.panel2 = ioexmanager.panel2.readGPIOAB();
+  //ioexmanager.values.panel2 = ioexmanager.panel2.readGPIOAB();
 
   //apply the cyclic momentary buttons to the joystick
   for (byte i = 0; i < 5; i++) {
@@ -370,6 +370,24 @@ void loop() {
   
   //send the joystick data to the sim
   joystick.sendState();
+
+  //send switch data to sim
+  static unsigned long previous_time = 0;
+  uint16_t outgoing_message_id = 1;
+
+  if (millis() > (previous_time + outgoing_delay)) {
+
+    uint8_t outgoing_payload[4] = {
+      ioexmanager.values.collective,
+      (ioexmanager.values.collective >> 8),
+      ioexmanager.values.panel1,
+      (ioexmanager.values.panel1 >> 8)
+    };
+
+    messagePort->SendMessage(outgoing_message_id, outgoing_payload, 4);
+    previous_time = millis();
+  };
+
 
   //check for new payload from AM, run the callback function if new payload is ready
   messagePort->Tick();
