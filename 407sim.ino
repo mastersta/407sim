@@ -339,6 +339,10 @@ void loop() {
   anexmanager.values.collective[1] = anexmanager.collective.readADC_SingleEnded(1);
   anexmanager.values.panel[0] = anexmanager.panel.readADC_SingleEnded(0);
 
+  //store the lowest throttle value for the idle stop detection, throttle is reversed so max is used
+  static unsigned int lowest_throttle = 0;
+  lowest_throttle = max(lowest_throttle, anexmanager.values.collective[1]);
+
   //apply the values in the array to the joystick axes
   joystick.setXAxis(anexmanager.values.cyclic[0]);
   joystick.setYAxis(anexmanager.values.cyclic[1]);
@@ -367,7 +371,6 @@ void loop() {
   //Serial.println(hat_direction(cyclic_hat_array));
   joystick.setHatSwitch(0, hat_direction(cyclic_hat_array));
   
-  
   //send the joystick data to the sim
   joystick.sendState();
 
@@ -375,19 +378,28 @@ void loop() {
   static unsigned long previous_time = 0;
   uint16_t outgoing_message_id = 1;
 
+  //only send switch data every outgoing delay
   if (millis() > (previous_time + outgoing_delay)) {
 
-    uint8_t outgoing_payload[4] = {
+    //apply the idle stop if throttle is in detent
+    bitWrite(
       ioexmanager.values.collective,
-      (ioexmanager.values.collective >> 8),
-      ioexmanager.values.panel1,
-      (ioexmanager.values.panel1 >> 8)
+      6,  //idle stop
+      anexmanager.values.collective[1] > (lowest_throttle * 0.9)
+    );
+      
+    //build the payload
+    uint8_t outgoing_payload[4] = {
+      ioexmanager.values.collective, //low half (top cut off)
+      (ioexmanager.values.collective >> 8), //high half
+      ioexmanager.values.panel1,  //low half (top cut off)
+      (ioexmanager.values.panel1 >> 8) //high half
     };
 
-    messagePort->SendMessage(outgoing_message_id, outgoing_payload, 4);
+    //send the payload out
+    messagePort->SendMessage(outgoing_message_id, outgoing_payload, 4); //TODO: ensure to update len
     previous_time = millis();
   };
-
 
   //check for new payload from AM, run the callback function if new payload is ready
   messagePort->Tick();
