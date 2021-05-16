@@ -9,7 +9,7 @@
 
 //misc defines
 #define i2c_speed 100000 //increase later after testing
-#define outgoing_delay 100
+#define outgoing_delay 50
 
 //ledd = TLC59017 led driver
 #define addr_ledd_panel1 0
@@ -110,7 +110,7 @@ static void new_message_callback(uint16_t message_id, struct SiMessagePortPayloa
       };
 
       //set the outputs according to the pwm data
-      //tlcmanager[counter].set_outputs(annunciator_pwm[counter]);
+      tlcmanager[counter].set_outputs(annunciator_pwm[counter]);
       
     };
 
@@ -269,6 +269,9 @@ void setup() {
   pinMode(17, OUTPUT);
   digitalWrite(17, LOW);
 
+  pinMode(30, OUTPUT);
+  digitalWrite(30, LOW);
+
   //calls the WDT setup function
   //watchdogSetup();
   
@@ -339,9 +342,34 @@ void loop() {
   anexmanager.values.collective[1] = anexmanager.collective.readADC_SingleEnded(1);
   anexmanager.values.panel[0] = anexmanager.panel.readADC_SingleEnded(0);
 
+  //read the digital boards, store the values in the array
+  ioexmanager.values.cyclic = ioexmanager.cyclic.readGPIOAB();
+  ioexmanager.values.collective = ioexmanager.collective.readGPIOAB();
+  ioexmanager.values.panel1 = ioexmanager.panel1.readGPIOAB();
+  //ioexmanager.values.panel2 = ioexmanager.panel2.readGPIOAB();
+
   //store the lowest throttle value for the idle stop detection, throttle is reversed so max is used
-  static unsigned int lowest_throttle = 0;
+  static int lowest_throttle = 0;
   lowest_throttle = max(lowest_throttle, anexmanager.values.collective[1]);
+
+  //if the throttle is in detent
+  if (anexmanager.values.collective[1] > (lowest_throttle * 0.9)) {
+    anexmanager.values.collective[1] = lowest_throttle;
+
+    //apply the idle stop
+    bitWrite(
+      ioexmanager.values.collective,
+      6,  //idle stop
+      0   //apply idle stop
+    );
+      
+  } else {
+    bitWrite(
+      ioexmanager.values.collective,
+      6,  //idle stop
+      1   //remove idle stop
+    );
+  }
 
   //apply the values in the array to the joystick axes
   joystick.setXAxis(anexmanager.values.cyclic[0]);
@@ -349,12 +377,6 @@ void loop() {
   joystick.setZAxis(anexmanager.values.collective[0]);
   joystick.setThrottle(anexmanager.values.collective[1]);
   joystick.setRudder(anexmanager.values.panel[0]);
-
-  //read the digital boards, store the values in the array
-  ioexmanager.values.cyclic = ioexmanager.cyclic.readGPIOAB();
-  ioexmanager.values.collective = ioexmanager.collective.readGPIOAB();
-  ioexmanager.values.panel1 = ioexmanager.panel1.readGPIOAB();
-  //ioexmanager.values.panel2 = ioexmanager.panel2.readGPIOAB();
 
   //apply the cyclic momentary buttons to the joystick
   for (byte i = 0; i < 5; i++) {
@@ -381,13 +403,6 @@ void loop() {
   //only send switch data every outgoing delay
   if (millis() > (previous_time + outgoing_delay)) {
 
-    //apply the idle stop if throttle is in detent
-    bitWrite(
-      ioexmanager.values.collective,
-      6,  //idle stop
-      anexmanager.values.collective[1] > (lowest_throttle * 0.9)
-    );
-      
     //build the payload
     uint8_t outgoing_payload[4] = {
       ioexmanager.values.collective, //low half (top cut off)
@@ -408,3 +423,4 @@ void loop() {
   digitalWrite(17, millis()%1000>500);
 
 }
+
