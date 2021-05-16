@@ -2,21 +2,142 @@
 
 --global variables
 counter = 0
+timer_delay = 50
+previous_payload = {
+  255,
+  255,
+  255,
+  255
+}
+command_table = static_data_load("command_table.json")
 
-function incoming_message_callback(id, payload)
-  print("data1: " .. payload[1])
-  print("data2: " .. payload[2])
-  print("data3: " .. payload[3])
-  print("data4: " .. payload[4])
-end
-
-id = hw_message_port_add("ARDUINO_LEONARDO_A", incoming_message_callback)
-
+--helper functions
 function numtobool(input)
   if input == 0 then return false
   else return true
   end
 end
+
+function booltonum(input)
+  if input == true then return 1
+  else return 0
+  end
+end
+
+function bitread(value, bit)
+  return ((value >> (bit - 1)) & 1)
+end
+
+function incoming_message_callback(id, payload)
+--  print("coll1-l: " .. payload[1])
+--  print("coll2-h: " .. payload[2])
+--  print("panl1-l: " .. payload[3])
+--  print("panl1-h: " .. payload[4])
+
+--  payload[2] = nil
+--  payload[3] = nil
+--  payload[4] = nil
+
+--[[
+  table of all the commands to be applied when a switch changes state
+  the format is as follows:
+  
+  [payload number] {
+    [input number] {
+      [input engaged value] = "desired command",
+      [input disengaged value] = "desired command"
+    },
+    [input number] {
+      [input engaged value] {
+        ["dataref"] = "desired dataref",
+        ["value"] = desired value
+      },
+      [input disengaged value] {
+        ["dataref"] = "desired dataref",
+        ["value"] = desired value
+      }
+    },
+    ...further inputs
+  },
+  ...further payloads
+  ]]--
+
+
+
+--compare each payload to previous iteration; if a bit is different than its previous iteration,
+--run the approprate command through a timer depending on which direction it changed as
+--switches that are ON are 0 due to the pullups
+  
+  --iterate over payloads
+  for i_payload, v_payload in ipairs(payload) do
+
+    --iterate over inputs
+    for i = 1, 8 do
+
+      local current_value = bitread(payload[i_payload], i)
+      local previous_value = bitread(previous_payload[i_payload], i)
+      if command_table[i_payload .. ""][i .. ""]["type"] == "momentary" then
+      
+        if current_value ~= previous_value then
+
+          xpl_command(
+            command_table[i_payload .. ""][i .. ""][0 .. ""],
+            1 - current_value
+          )
+
+        end
+
+      elseif command_table[i_payload .. ""][i .. ""]["type"] == "toggle" then
+
+      --if input is different than previous
+        if current_value ~= previous_value then
+
+        --use input value as index, check if "dataref" = nil
+          if command_table[i_payload .. ""][i .. ""][current_value .. ""]["dataref"] ~= nil then
+
+          --if not, write "dataref" with "value"
+            xpl_dataref_write(
+              command_table[i_payload .. ""][i .. ""][current_value .. ""]["dataref"],
+              command_table[i_payload .. ""][i .. ""][current_value .. ""]["type"],
+              command_table[i_payload .. ""][i .. ""][current_value .. ""]["value"]
+            )
+
+        --if is, send command with timer to end command
+          else
+        
+
+            xpl_command(
+              command_table[i_payload .. ""][i .. ""][current_value .. ""],
+              1
+            )
+
+            function timer_callback()
+              xpl_command(
+                command_table[i_payload .. ""][i .. ""][current_value .. ""],
+                0
+              )
+            end  --function timer callback
+
+            timer_start(
+              timer_delay,
+              timer_callback
+            )
+          end --if nil
+        end  --if current value
+      end  --if else momentary toggle
+    end  --iterate over inputs
+  end --iterate over payloads
+
+
+
+  --assign most recent payload to previous payload
+  for index, value in ipairs(payload) do
+    previous_payload[index] = payload[index]
+  end
+
+end --function end
+
+id = hw_message_port_add("ARDUINO_LEONARDO_A", incoming_message_callback)
 
 
 
@@ -128,13 +249,13 @@ function annunciator_callback(
     payload3 = 15
   end
 
-  local payload4 = math.floor(instr_brt[11] * 255)
+  local payload4 = 255 * booltonum(bus_volts[1] > 12) --math.floor(instr_brt[11] * 255)
   
   if hw_connected("ARDUINO_LEONARDO_A") then
-    if (counter % 2) then
+    if (counter == 0) then
       hw_message_port_send(id, 0, "INT[4]", {payload1, payload2, payload3, payload4})
-      counter = counter + 1
     end
+    counter = (counter + 1) % 3
   end
 
 
