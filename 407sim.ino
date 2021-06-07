@@ -311,7 +311,7 @@ void setup() {
   }
   
   //initialize the joystick
-  joystick.begin(false);
+  joystick.begin(true);
 
   joystick.setXAxisRange(0,2048);
   joystick.setYAxisRange(0,2048);
@@ -393,9 +393,6 @@ void loop() {
   //Serial.println(hat_direction(cyclic_hat_array));
   joystick.setHatSwitch(0, hat_direction(cyclic_hat_array));
   
-  //send the joystick data to the sim
-  joystick.sendState();
-
   //send switch data to sim
   static unsigned long previous_time = 0;
   uint16_t outgoing_message_id = 1;
