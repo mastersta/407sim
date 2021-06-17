@@ -91,7 +91,6 @@ static void new_message_callback(uint16_t message_id, struct SiMessagePortPayloa
   static int volts_pwm = 255;                           //bus volts pwm value from instrument
   static unsigned int annunciator_data[3] = {0, 0, 0};  //binary annunciator light status
   static byte annunciator_pwm[3][16];                   //above with pwm value applied
-  static byte counter = 0;                              //counts from 0-2 to cycle which driver to update
 
   //0 = annunciator light status data
   if (message_id == 0) {
@@ -110,15 +109,11 @@ static void new_message_callback(uint16_t message_id, struct SiMessagePortPayloa
       };
 
       //set the outputs according to the pwm data
-      tlcmanager[counter].set_outputs(annunciator_pwm[counter]);
+      tlcmanager[i].set_outputs(annunciator_pwm[i]);
       
     };
 
   };
-
-  //increments the counter and wraps it back to zero if necessary
-  counter++;
-  if (counter == 3) { counter = 0; };
 
 };
 
@@ -396,21 +391,28 @@ void loop() {
   //send switch data to sim
   static unsigned long previous_time = 0;
   uint16_t outgoing_message_id = 1;
+  static uint8_t previous_outgoing_payload[4] = {};
 
-  //only send switch data every outgoing delay
-  if (millis() > (previous_time + outgoing_delay)) {
+  //build the payload
+  uint8_t outgoing_payload[4] = {
+    ioexmanager.values.collective, //low half (top cut off)
+    (ioexmanager.values.collective >> 8), //high half
+    ioexmanager.values.panel1,  //low half (top cut off)
+    (ioexmanager.values.panel1 >> 8) //high half
+  };
 
-    //build the payload
-    uint8_t outgoing_payload[4] = {
-      ioexmanager.values.collective, //low half (top cut off)
-      (ioexmanager.values.collective >> 8), //high half
-      ioexmanager.values.panel1,  //low half (top cut off)
-      (ioexmanager.values.panel1 >> 8) //high half
-    };
+  bool flag = true;
+  for (byte i = 0; i < 4; i++) {
+    if (outgoing_payload[i] != previous_outgoing_payload[i]) { flag = false; };
+  };
 
+  if (!flag) {
     //send the payload out
     messagePort->SendMessage(outgoing_message_id, outgoing_payload, 4); //TODO: ensure to update len
-    previous_time = millis();
+  };
+  
+  for (byte i = 0; i < 4; i++) {
+    previous_outgoing_payload[i] = outgoing_payload[i];
   };
 
   //check for new payload from AM, run the callback function if new payload is ready

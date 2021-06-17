@@ -2,14 +2,16 @@
 
 --global variables
 counter = 0
-timer_delay = 50
-previous_payload = {
+timer_delay = 10
+previous_payload_in = {
   255,
   255,
   255,
   255
 }
+previous_payload_out = {0,0,0,0}
 command_table = static_data_load("command_table.json")
+payload_counter = 0
 
 --helper functions
 function numtobool(input)
@@ -28,15 +30,16 @@ function bitread(value, bit)
   return ((value >> (bit - 1)) & 1)
 end
 
-function incoming_message_callback(id, payload)
---  print("coll1-l: " .. payload[1])
---  print("coll2-h: " .. payload[2])
---  print("panl1-l: " .. payload[3])
---  print("panl1-h: " .. payload[4])
+function array_compare(array1, array2)
+  for i,v in pairs(array1) do
+    if v ~= array2[i] then
+      return false
+    end
+  end
+  return true
+end
 
---  payload[2] = nil
---  payload[3] = nil
---  payload[4] = nil
+function incoming_message_callback(id, payload)
 
 --[[
   table of all the commands to be applied when a switch changes state
@@ -67,7 +70,8 @@ function incoming_message_callback(id, payload)
 --compare each payload to previous iteration; if a bit is different than its previous iteration,
 --run the approprate command through a timer depending on which direction it changed as
 --switches that are ON are 0 due to the pullups
-  
+
+  print("incoming payload")  
   --iterate over payloads
   for i_payload, v_payload in ipairs(payload) do
 
@@ -75,7 +79,7 @@ function incoming_message_callback(id, payload)
     for i = 1, 8 do
 
       local current_value = bitread(payload[i_payload], i)
-      local previous_value = bitread(previous_payload[i_payload], i)
+      local previous_value = bitread(previous_payload_in[i_payload], i)
       if command_table[i_payload .. ""][i .. ""]["type"] == "momentary" then
       
         if current_value ~= previous_value then
@@ -84,6 +88,7 @@ function incoming_message_callback(id, payload)
             command_table[i_payload .. ""][i .. ""][0 .. ""],
             1 - current_value
           )
+          print("momentary")
 
         end
 
@@ -101,6 +106,7 @@ function incoming_message_callback(id, payload)
               command_table[i_payload .. ""][i .. ""][current_value .. ""]["type"],
               command_table[i_payload .. ""][i .. ""][current_value .. ""]["value"]
             )
+            print("toggle dataref")
 
         --if is, send command with timer to end command
           else
@@ -110,29 +116,30 @@ function incoming_message_callback(id, payload)
               command_table[i_payload .. ""][i .. ""][current_value .. ""],
               1
             )
+            print("toggle command")
 
             function timer_callback()
               xpl_command(
                 command_table[i_payload .. ""][i .. ""][current_value .. ""],
                 0
               )
-            end  --function timer callback
+            end
 
             timer_start(
               timer_delay,
               timer_callback
             )
-          end --if nil
-        end  --if current value
-      end  --if else momentary toggle
-    end  --iterate over inputs
-  end --iterate over payloads
+          end
+        end
+      end
+    end
+  end
 
 
 
   --assign most recent payload to previous payload
   for index, value in ipairs(payload) do
-    previous_payload[index] = payload[index]
+    previous_payload_in[index] = payload[index]
   end
 
 end --function end
@@ -249,13 +256,33 @@ function annunciator_callback(
     payload3 = 15
   end
 
-  local payload4 = 255 * booltonum(bus_volts[1] > 12) --math.floor(instr_brt[11] * 255)
+  --bool brightness
+  --local payload4 = 255 * booltonum(bus_volts[1] > 12)
+
+  --analog brightness
+  local payload4 = math.floor(instr_brt[11] * 255)
   
   if hw_connected("ARDUINO_LEONARDO_A") then
-    if (counter == 0) then
-      hw_message_port_send(id, 0, "INT[4]", {payload1, payload2, payload3, payload4})
+--    if (counter == 0) then
+--      hw_message_port_send(id, 0, "INT[4]", {payload1, payload2, payload3, payload4})
+--    end
+--    counter = (counter + 1) % 3
+
+
+
+    local payload_final_out = {payload1, payload2, payload3, payload4}
+    if not array_compare(payload_final_out, previous_payload_out) then
+      print("sending payload " .. payload_counter)     
+      payload_counter = payload_counter + 1
+      hw_message_port_send(id, 0, "INT[4]", {
+        payload_final_out[1],
+        payload_final_out[2],
+        payload_final_out[3],
+        payload_final_out[4]
+      })
+      previous_payload_out = payload_final_out
     end
-    counter = (counter + 1) % 3
+
   end
 
 
