@@ -51,38 +51,6 @@ SiMessagePort* messagePort;
 
 /*-------------------------------------------------------------
 
-WATCHDOG TIMER {{{
-Due to occasional locking up of the main loop during repeated
-signals sent to the annunciator, a WDT has been set up to
-attempt to clear the i2c bus and restore functionality.
-
--------------------------------------------------------------*/
-//void watchdogSetup(void) {
-//  cli();
-//  wdt_reset();
-//  //interrupt enabled, reset disabled, 250ms
-//  WDTCSR = 0b01011100;
-//  sei();
-//}
-//
-////called when the watchdog timer elapses without reset
-//ISR(WDT_vect) {
-//
-//  pinMode(3, OUTPUT);
-//
-//  //pulse the clock line 10 times to attempt to clear a hung bus
-//  for (byte i = 0; i < 10; i++) {
-//    digitalWrite(3,LOW);
-//    digitalWrite(3,HIGH);
-//  };
-//
-//}; //}}}
-
-
-
-
-/*-------------------------------------------------------------
-
 AIR MANAGER CALLBACK FUNCTION
 When `Tick()` is called in the main loop, and a fresh payload
 is ready from Air Manager, this function is called. It splits
@@ -96,39 +64,39 @@ and may be removed when a real solution is found to the issue.
 
 -------------------------------------------------------------*/
 static void new_message_callback(uint16_t message_id, struct SiMessagePortPayload* payload) {
-//
-//  static int volts_pwm = 255;                           //bus volts pwm value from instrument
-//  static unsigned int annunciator_data[3] = {0, 0, 0};  //binary annunciator light status
-//  static byte annunciator_pwm[3][16];                   //above with pwm value applied
-//  static byte counter = 0;                              //counts from 0-2 to cycle which driver to update
-//
-//  //0 = annunciator light status data
-//  if (message_id == 0) {
-//    
-//    volts_pwm = payload->data_int[3];
-//    
-//    //iterate over each int32 in the payload
-//    for (byte i = 0; i < 3; i++) {
-//      
-//      //drop into annunciator data (uint16 casted automatically)
-//      annunciator_data[i] = payload->data_int[i];
-//
-//      //iterate over each bit, apply current bus voltage pwm value
-//      for (byte j = 0; j < 16; j++) {
-//        annunciator_pwm[i][j] = (bitRead(annunciator_data[i], j) * volts_pwm);
-//      };
-//
-//      //set the outputs according to the pwm data
-//      tlcmanager[counter].set_outputs(annunciator_pwm[counter]);
-//      
-//    };
-//
-//  };
-//
-//  //increments the counter and wraps it back to zero if necessary
-//  counter++;
-//  if (counter == 3) { counter = 0; };
-//
+
+  static int volts_pwm = 255;                           //bus volts pwm value from instrument
+  static unsigned int annunciator_data[3] = {0, 0, 0};  //binary annunciator light status
+  static byte annunciator_pwm[3][16];                   //above with pwm value applied
+  static byte counter = 0;                              //counts from 0-2 to cycle which driver to update
+
+  //0 = annunciator light status data
+  if (message_id == 0) {
+    
+    volts_pwm = payload->data_int[3];
+    
+    //iterate over each int32 in the payload
+    for (byte i = 0; i < 3; i++) {
+      
+      //drop into annunciator data (uint16 casted automatically)
+      annunciator_data[i] = payload->data_int[i];
+
+      //iterate over each bit, apply current bus voltage pwm value
+      for (byte j = 0; j < 16; j++) {
+        annunciator_pwm[i][j] = (bitRead(annunciator_data[i], j) * volts_pwm);
+      };
+
+      //set the outputs according to the pwm data
+      tlcmanager[counter].set_outputs(annunciator_pwm[counter]);
+      
+    };
+
+  };
+
+  //increments the counter and wraps it back to zero if necessary
+  counter++;
+  if (counter == 3) { counter = 0; };
+
 };
 
 
@@ -139,74 +107,74 @@ static void new_message_callback(uint16_t message_id, struct SiMessagePortPayloa
 JOYSTICK CONFIGURATION
 
 -------------------------------------------------------------*/
-//Joystick_ joystick(
-//  JOYSTICK_DEFAULT_REPORT_ID,
-//  JOYSTICK_TYPE_JOYSTICK,
-//  6,  //buttons
-//  1,  //hats
-//  true, //x axis [roll]
-//  true, //y axis [pitch]
-//  true, //z axis [collective]
-//  false, //xR
-//  false, //yR
-//  false, //zR
-//  true, //rudder [anti-torque]
-//  true, //throttle [throttle]
-//  false, //accelerator
-//  false, //brake
-//  false  //steering
-//);
+Joystick_ joystick(
+  JOYSTICK_DEFAULT_REPORT_ID,
+  JOYSTICK_TYPE_JOYSTICK,
+  6,  //buttons
+  1,  //hats
+  true, //x axis [roll]
+  true, //y axis [pitch]
+  true, //z axis [collective]
+  false, //xR
+  false, //yR
+  false, //zR
+  true, //rudder [anti-torque]
+  true, //throttle [throttle]
+  false, //accelerator
+  false, //brake
+  false  //steering
+);
 
 
-//int hat_direction(int input_array[4]) {
-////takes in an array of the four hat switch states (up, right, down, left) (pullups)
-////outputs the degrees that the joystick library expects for the hat position
-//
-//  int output_array[4] = {
-//    input_array[0],
-//    input_array[1] * 2,
-//    input_array[3] * 4, //swapped for cyclic input order
-//    input_array[2] * 8
-//  };
-//
-//  int mask = B0000;
-//  for (int i = 0; i < 4; i++) {
-//    mask = output_array[i] | mask;
-//  };
-//
-//
-//  switch (mask) {
-//    case B0000:
-//      return -1;
-//      break;
-//    case B0001:
-//      return 0;
-//      break;
-//    case B0011:
-//      return 45;
-//      break;
-//    case B0010:
-//      return 90;
-//      break;
-//    case B0110:
-//      return 135;
-//      break;
-//    case B0100:
-//      return 180;
-//      break;
-//    case B1100:
-//      return 225;
-//      break;
-//    case B1000:
-//      return 270;
-//      break;
-//    case B1001:
-//      return 315;
-//      break;
-//    default:
-//      return -1;
-//  };
-//};
+int hat_direction(int input_array[4]) {
+//takes in an array of the four hat switch states (up, right, down, left) (pullups)
+//outputs the degrees that the joystick library expects for the hat position
+
+  int output_array[4] = {
+    input_array[0],
+    input_array[1] * 2,
+    input_array[3] * 4, //swapped for cyclic input order
+    input_array[2] * 8
+  };
+
+  int mask = B0000;
+  for (int i = 0; i < 4; i++) {
+    mask = output_array[i] | mask;
+  };
+
+
+  switch (mask) {
+    case B0000:
+      return -1;
+      break;
+    case B0001:
+      return 0;
+      break;
+    case B0011:
+      return 45;
+      break;
+    case B0010:
+      return 90;
+      break;
+    case B0110:
+      return 135;
+      break;
+    case B0100:
+      return 180;
+      break;
+    case B1100:
+      return 225;
+      break;
+    case B1000:
+      return 270;
+      break;
+    case B1001:
+      return 315;
+      break;
+    default:
+      return -1;
+  };
+};
 
 
 
@@ -216,28 +184,28 @@ JOYSTICK CONFIGURATION
 ANALOG EXPANDER SETUP
 
 -------------------------------------------------------------*/
-//struct anex {  //define
-//  Adafruit_ADS1015 cyclic = Adafruit_ADS1015(addr_anex_cyclic);
-//  Adafruit_ADS1015 collective = Adafruit_ADS1015(addr_anex_collective);
-//  Adafruit_ADS1015 panel = Adafruit_ADS1015(addr_anex_panel);
-//  Adafruit_ADS1015 overhead = Adafruit_ADS1015(addr_anex_overhead);
-//
-//  struct struct_anex_values {  //stores analog input values
-//    int cyclic[4];
-//    int collective[4];
-//    int panel[4];
-//    int overhead[4];
-//  };
-//
-//  struct struct_anex_values values { //init to zero
-//    {0,0,0,0},
-//    {0,0,0,0},
-//    {0,0,0,0},
-//    {0,0,0,0}
-//  };
-//};
-//
-//struct anex anexmanager{}; //initialize
+struct anex {  //define
+  Adafruit_ADS1015 cyclic = Adafruit_ADS1015(addr_anex_cyclic);
+  Adafruit_ADS1015 collective = Adafruit_ADS1015(addr_anex_collective);
+  Adafruit_ADS1015 panel = Adafruit_ADS1015(addr_anex_panel);
+  Adafruit_ADS1015 overhead = Adafruit_ADS1015(addr_anex_overhead);
+
+  struct struct_anex_values {  //stores analog input values
+    int cyclic[4];
+    int collective[4];
+    int panel[4];
+    int overhead[4];
+  };
+
+  struct struct_anex_values values { //init to zero
+    {0,0,0,0},
+    {0,0,0,0},
+    {0,0,0,0},
+    {0,0,0,0}
+  };
+};
+
+struct anex anexmanager{}; //initialize
 
 
 
@@ -268,6 +236,111 @@ struct ioex ioexmanager{}; //initialize
 
 
 
+/*--------------------------------------------------------------
+
+ENCODER INTERRUPT HANDLING
+
+Triggered on an encoder interrupt, this function reads the last
+interrupt pin on the panel2 ioex, and gets it value. It then
+looks at the previous state of the encoders and determines which
+encoder triggered the interrupt and then determines which
+direction it moved. It then updates the array tracking total
+increments/decrements since startup, and passes it to the main
+loop which then gets sent to air manager to apply the proper
+increment/decrement to the dataraf in question
+
+-------------------------------------------------------------*/
+uint32_t * handle_encoders() {
+  
+  encoder_flag = false;
+
+  static uint32_t encoder_counts[3] = {}; //tracks number of turns since boot
+  static uint16_t previous_encoder_data= 0;  //tracks previous state of encoders
+
+  uint8_t last_int_pin = ioexmanager.panel2.getLastInterruptPin();
+  uint8_t last_int_val = ioexmanager.panel2.getLastInterruptPinValue();
+
+  switch (last_int_pin) {
+
+    //altimeter encoder
+    case 0: //pin A
+      if (last_int_val == bitRead(previous_encoder_data,1)) {
+        if (last_int_val == 1) {
+          encoder_counts[0]++;
+        } else {
+          encoder_counts[0]--;
+        };
+      };
+      bitWrite(previous_encoder_data, 0, last_int_val);
+      break;
+
+    case 1: //pin B
+      if (last_int_val == bitRead(previous_encoder_data,0)) {
+        if (last_int_val == 1) {
+          encoder_counts[0]--;
+        } else {
+          encoder_counts[0]++;
+        };
+      };
+      bitWrite(previous_encoder_data, 1, last_int_val);
+      break;
+
+
+    //heading bug encoder
+    case 2: //pin A
+      if (last_int_val == bitRead(previous_encoder_data,1)) {
+        if (last_int_val == 1) {
+          encoder_counts[1]++;
+        } else {
+          encoder_counts[1]--;
+        };
+      };
+      bitWrite(previous_encoder_data, 2, last_int_val);
+      break;
+
+    case 3: //pin B
+      if (last_int_val == bitRead(previous_encoder_data,0)) {
+        if (last_int_val == 1) {
+          encoder_counts[1]--;
+        } else {
+          encoder_counts[1]++;
+        };
+      };
+      bitWrite(previous_encoder_data, 3, last_int_val);
+      break;
+
+
+    //HSI course indicator encoder
+    case 4: //pin A
+      if (last_int_val == bitRead(previous_encoder_data,1)) {
+        if (last_int_val == 1) {
+          encoder_counts[2]++;
+        } else {
+          encoder_counts[2]--;
+        };
+      };
+      bitWrite(previous_encoder_data, 4, last_int_val);
+      break;
+
+    case 5: //pin B
+      if (last_int_val == bitRead(previous_encoder_data,0)) {
+        if (last_int_val == 1) {
+          encoder_counts[2]--;
+        } else {
+          encoder_counts[2]++;
+        };
+      };
+      bitWrite(previous_encoder_data, 5, last_int_val);
+      break;
+  };
+
+  return encoder_counts;
+
+};
+
+
+
+
 /*-------------------------------------------------------------
 
 SETUP
@@ -280,13 +353,10 @@ void setup() {
 
   attachInterrupt(digitalPinToInterrupt(encoder_interrupt_pin), encoder_interrupt, FALLING);
 
-  //calls the WDT setup function
-  //watchdogSetup();
-  
   //tlc init 
-//  tlcmanager.init();
-//  tlcmanager.broadcast().set_milliamps(20, 1000);
-//  tlcmanager.broadcast().on_pattern(0xAAAA);  //checkerboard pattern
+  tlcmanager.init();
+  tlcmanager.broadcast().set_milliamps(20, 1000);
+  tlcmanager.broadcast().on_pattern(0xAAAA);  //checkerboard pattern
 
   //messageport setup
   messagePort = new SiMessagePort(
@@ -296,45 +366,45 @@ void setup() {
   );
 
   //initialize the analog boards
-//  anexmanager.cyclic.begin();
-//  anexmanager.cyclic.setGain(GAIN_ONE);
-//  
-//  anexmanager.collective.begin();
-//  anexmanager.collective.setGain(GAIN_ONE);
-//  
-//  anexmanager.panel.begin();
-//  anexmanager.panel.setGain(GAIN_ONE);
+  anexmanager.cyclic.begin();
+  anexmanager.cyclic.setGain(GAIN_ONE);
+  
+  anexmanager.collective.begin();
+  anexmanager.collective.setGain(GAIN_ONE);
+  
+  anexmanager.panel.begin();
+  anexmanager.panel.setGain(GAIN_ONE);
 
   //initialize the digital boards
   ioexmanager.cyclic.begin();
   ioexmanager.collective.begin(addr_ioex_collective);
   ioexmanager.panel1.begin(addr_ioex_panel1);
-  //ioexmanager.panel2.begin(addr_ioex_panel2);
+  ioexmanager.panel2.begin(addr_ioex_panel2);
  
   for (byte i = 0; i < 16; i++) {
     ioexmanager.cyclic.pullUp(i, HIGH);
     ioexmanager.collective.pullUp(i, HIGH);
     ioexmanager.panel1.pullUp(i, HIGH);
-    //ioexmanager.panel2.pullUp(i, HIGH);
+    ioexmanager.panel2.pullUp(i, HIGH);
   }
 
   //setup the correct MCP pins as interrupt-triggers
   //do not mirror INTA and INTB, open-drain, trigger with low state
-  ioexmanager.panel1.setupInterrupts(false,false,LOW);
+  ioexmanager.panel1.setupInterrupts(true,false,LOW);
   
-  //pins 8 through 13 are for panel encoders, set each to trigger on change in value
-  for (byte i = 8; i < 14; i++) {
-    ioexmanager.panel1.setupInterruptPin(i, CHANGE);
+  //set all pins on panel2 ioex as interrupts on change in value
+  for (int i = 0; i++; i < 16) {
+    ioexmanager.panel2.setupInterruptPin(i, CHANGE);
   };
   
   //initialize the joystick
-//  joystick.begin(false);
-//
-//  joystick.setXAxisRange(0,2048);
-//  joystick.setYAxisRange(0,2048);
-//  joystick.setZAxisRange(0,2048);
-//  joystick.setThrottleRange(0,2048);
-//  joystick.setRudderRange(0,2048);
+  joystick.begin(false);
+
+  joystick.setXAxisRange(0,2048);
+  joystick.setYAxisRange(0,2048);
+  joystick.setZAxisRange(0,2048);
+  joystick.setThrottleRange(0,2048);
+  joystick.setRudderRange(0,2048);
 
   
 };
@@ -349,162 +419,75 @@ MAIN LOOP
 -------------------------------------------------------------*/
 void loop() {
 
-  //reset the WDT; 250ms without reset will call the interrupt function
-  //wdt_reset();
-
-  //handle encoders
-  uint32_t encoder_counts[3] = {}; 
-  static byte previous_encoder_data= 0;
-  uint16_t encoder_message_id = 2;
-
-
-  if (encoder_flag) {
-    encoder_flag = false;
-
-    uint8_t last_int_pin = (ioexmanager.panel1.getLastInterruptPin() - 8);
-    uint8_t last_int_val = ioexmanager.panel1.getLastInterruptPinValue();
-
-    switch (last_int_pin) {
-
-      //altimeter encoder
-      case 0: //pin A
-        if (last_int_val == bitRead(previous_encoder_data,1)) {
-          if (last_int_val == 1) {
-            encoder_counts[0]++;
-          } else {
-            encoder_counts[0]--;
-          };
-        };
-        bitWrite(previous_encoder_data, 0, last_int_val);
-        break;
-
-      case 1: //pin B
-        if (last_int_val == bitRead(previous_encoder_data,0)) {
-          if (last_int_val == 1) {
-            encoder_counts[0]--;
-          } else {
-            encoder_counts[0]++;
-          };
-        };
-        bitWrite(previous_encoder_data, 1, last_int_val);
-        break;
-
-
-      //heading bug encoder
-      case 2: //pin A
-        if (last_int_val == bitRead(previous_encoder_data,1)) {
-          if (last_int_val == 1) {
-            encoder_counts[0]++;
-          } else {
-            encoder_counts[0]--;
-          };
-        };
-        bitWrite(previous_encoder_data, 0, last_int_val);
-        break;
-
-      case 3: //pin B
-        if (last_int_val == bitRead(previous_encoder_data,0)) {
-          if (last_int_val == 1) {
-            encoder_counts[0]--;
-          } else {
-            encoder_counts[0]++;
-          };
-        };
-        bitWrite(previous_encoder_data, 1, last_int_val);
-        break;
-
-
-      //HSI course indicator encoder
-      case 4: //pin A
-        if (last_int_val == bitRead(previous_encoder_data,1)) {
-          if (last_int_val == 1) {
-            encoder_counts[0]++;
-          } else {
-            encoder_counts[0]--;
-          };
-        };
-        bitWrite(previous_encoder_data, 0, last_int_val);
-        break;
-
-      case 5: //pin B
-        if (last_int_val == bitRead(previous_encoder_data,0)) {
-          if (last_int_val == 1) {
-            encoder_counts[0]--;
-          } else {
-            encoder_counts[0]++;
-          };
-        };
-        bitWrite(previous_encoder_data, 1, last_int_val);
-        break;
-    };
-
-
-  };
 
   //read the analog boards, store the values in the array
-//  anexmanager.values.cyclic[0] = anexmanager.cyclic.readADC_SingleEnded(0);
-//  anexmanager.values.cyclic[1] = anexmanager.cyclic.readADC_SingleEnded(1);
-//  anexmanager.values.collective[0] = anexmanager.collective.readADC_SingleEnded(0);
-//  anexmanager.values.collective[1] = anexmanager.collective.readADC_SingleEnded(1);
-//  anexmanager.values.panel[0] = anexmanager.panel.readADC_SingleEnded(0);
+  anexmanager.values.cyclic[0] = anexmanager.cyclic.readADC_SingleEnded(0);
+  anexmanager.values.cyclic[1] = anexmanager.cyclic.readADC_SingleEnded(1);
+  anexmanager.values.collective[0] = anexmanager.collective.readADC_SingleEnded(0);
+  anexmanager.values.collective[1] = anexmanager.collective.readADC_SingleEnded(1);
+  anexmanager.values.panel[0] = anexmanager.panel.readADC_SingleEnded(0);
 
   //read the digital boards, store the values in the array
   ioexmanager.values.cyclic = ioexmanager.cyclic.readGPIOAB();
   ioexmanager.values.collective = ioexmanager.collective.readGPIOAB();
   ioexmanager.values.panel1 = ioexmanager.panel1.readGPIOAB();
-  //ioexmanager.values.panel2 = ioexmanager.panel2.readGPIOAB();
+  //panel2 is encoders and thus doesn't need to be read until an encoder interrupt happens
 
   //store the lowest throttle value for the idle stop detection, throttle is reversed so max is used
-//  static int lowest_throttle = 0;
-//  lowest_throttle = max(lowest_throttle, anexmanager.values.collective[1]);
-//
-//  //if the throttle is in detent
-//  if (anexmanager.values.collective[1] > (lowest_throttle * 0.9)) {
-//    anexmanager.values.collective[1] = lowest_throttle;
-//
-//    //apply the idle stop
-//    bitWrite(
-//      ioexmanager.values.collective,
-//      6,  //idle stop
-//      0   //apply idle stop
-//    );
-//      
-//  } else {
-//    bitWrite(
-//      ioexmanager.values.collective,
-//      6,  //idle stop
-//      1   //remove idle stop
-//    );
-//  }
+  static int lowest_throttle = 0;
+  lowest_throttle = max(lowest_throttle, anexmanager.values.collective[1]);
 
-  //apply the values in the array to the joystick axes
-//  joystick.setXAxis(anexmanager.values.cyclic[0]);
-//  joystick.setYAxis(anexmanager.values.cyclic[1]);
-//  joystick.setZAxis(anexmanager.values.collective[0]);
-//  joystick.setThrottle(anexmanager.values.collective[1]);
-//  joystick.setRudder(anexmanager.values.panel[0]);
+  //if the throttle is in detent
+  if (anexmanager.values.collective[1] > (lowest_throttle * 0.9)) {
+    anexmanager.values.collective[1] = lowest_throttle;
 
-  //apply the cyclic momentary buttons to the joystick
-//  for (byte i = 0; i < 5; i++) {
-//    joystick.setButton(i, !bitRead(ioexmanager.values.cyclic, i));
-//  };
-//  joystick.setButton(5, !bitRead(ioexmanager.values.cyclic, 9));
+    //apply the idle stop
+    bitWrite(
+      ioexmanager.values.collective,
+      6,  //idle stop
+      0   //apply idle stop
+    );
+      
+  } else {
+    bitWrite(
+      ioexmanager.values.collective,
+      6,  //idle stop
+      1   //remove idle stop
+    );
+  }
 
-  
-  //apply the cyclic hat inputs to the joystick hat
-//  int cyclic_hat_array[4] {};
-//  for (byte i = 0; i < 4; i++) {
-//    cyclic_hat_array[i] = !bitRead(ioexmanager.values.cyclic, (i + 5));
-//  }
-  //Serial.println(hat_direction(cyclic_hat_array));
-//  joystick.setHatSwitch(0, hat_direction(cyclic_hat_array));
-  
-  //send the joystick data to the sim
-//  joystick.sendState();
+//apply the values in the array to the joystick axes
+  joystick.setXAxis(anexmanager.values.cyclic[0]);
+  joystick.setYAxis(anexmanager.values.cyclic[1]);
+  joystick.setZAxis(anexmanager.values.collective[0]);
+  joystick.setThrottle(anexmanager.values.collective[1]);
+  joystick.setRudder(anexmanager.values.panel[0]);
 
-  //send switch data to sim
+//apply the cyclic momentary buttons to the joystick
+  for (byte i = 0; i < 5; i++) {
+    joystick.setButton(i, !bitRead(ioexmanager.values.cyclic, i));
+  };
+  joystick.setButton(5, !bitRead(ioexmanager.values.cyclic, 9));
+
+
+//apply the cyclic hat inputs to the joystick hat
+  int cyclic_hat_array[4] {};
+  for (byte i = 0; i < 4; i++) {
+    cyclic_hat_array[i] = !bitRead(ioexmanager.values.cyclic, (i + 5));
+  }
+//Serial.println(hat_direction(cyclic_hat_array));
+  joystick.setHatSwitch(0, hat_direction(cyclic_hat_array));
+
+//send the joystick data to the sim
+  joystick.sendState();
+
+  //send outgoing data to sim
   static unsigned long previous_time = 0;
   uint16_t switch_message_id = 1;
+  uint16_t encoder_message_id = 2;
+
+  uint32_t *encoder_payload;
+  if (encoder_flag) { encoder_payload = handle_encoders() };
 
   //only send switch data every outgoing delay
   if (millis() > (previous_time + outgoing_delay)) {
