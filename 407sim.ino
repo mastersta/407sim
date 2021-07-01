@@ -296,13 +296,13 @@ void setup() {
   ioexmanager.cyclic.begin();
   ioexmanager.collective.begin(addr_ioex_collective);
   ioexmanager.panel1.begin(addr_ioex_panel1);
-  //ioexmanager.panel2.begin(addr_ioex_panel2);
+  ioexmanager.panel2.begin(addr_ioex_panel2);
   
   for (byte i = 0; i < 16; i++) {
     ioexmanager.cyclic.pullUp(i, HIGH);
     ioexmanager.collective.pullUp(i, HIGH);
     ioexmanager.panel1.pullUp(i, HIGH);
-    //ioexmanager.panel2.pullUp(i, HIGH);
+    ioexmanager.panel2.pullUp(i, HIGH);
   }
   
   //initialize the joystick
@@ -341,7 +341,7 @@ void loop() {
   ioexmanager.values.cyclic = ioexmanager.cyclic.readGPIOAB();
   ioexmanager.values.collective = ioexmanager.collective.readGPIOAB();
   ioexmanager.values.panel1 = ioexmanager.panel1.readGPIOAB();
-  //ioexmanager.values.panel2 = ioexmanager.panel2.readGPIOAB();
+  ioexmanager.values.panel2 = ioexmanager.panel2.readGPIOAB();
 
   //store the lowest throttle value for the idle stop detection, throttle is reversed so max is used
   static int lowest_throttle = 0;
@@ -393,27 +393,29 @@ void loop() {
   //send switch data to sim
   static unsigned long previous_time = 0;
   uint16_t outgoing_message_id = 1;
-  static uint8_t previous_outgoing_payload[4] = {};
+  static uint8_t previous_outgoing_payload[6] = {};
 
   //build the payload
-  uint8_t outgoing_payload[4] = {
+  uint8_t outgoing_payload[6] = {
     ioexmanager.values.collective, //low half (top cut off)
     (ioexmanager.values.collective >> 8), //high half
     ioexmanager.values.panel1,  //low half (top cut off)
-    (ioexmanager.values.panel1 >> 8) //high half
+    (ioexmanager.values.panel1 >> 8), //high half
+    ioexmanager.values.panel2,  //low half (top cut off)
+    (ioexmanager.values.panel2 >> 8) //high half
   };
 
   bool flag = true;
-  for (byte i = 0; i < 4; i++) {
+  for (byte i = 0; i < 6; i++) {
     if (outgoing_payload[i] != previous_outgoing_payload[i]) { flag = false; };
   };
 
   if (!flag) {
     //send the payload out
-    messagePort->SendMessage(outgoing_message_id, outgoing_payload, 4); //TODO: ensure to update len
+    messagePort->SendMessage(outgoing_message_id, outgoing_payload, 6); //TODO: ensure to update len
   };
   
-  for (byte i = 0; i < 4; i++) {
+  for (byte i = 0; i < 6; i++) {
     previous_outgoing_payload[i] = outgoing_payload[i];
   };
 

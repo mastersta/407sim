@@ -7,11 +7,14 @@ previous_payload_in = {
   255,
   255,
   255,
+  255,
+  255,
   255
 }
 previous_payload_out = {0,0,0,0}
 command_table = static_data_load("command_table.json")
 payload_counter = 0
+ffff = 65535
 
 --helper functions
 function numtobool(input)
@@ -88,7 +91,7 @@ function incoming_message_callback(id, payload)
             command_table[i_payload .. ""][i .. ""][0 .. ""],
             1 - current_value
           )
-          print("momentary")
+          print("momentary - " .. i_payload .. ":" .. i)
 
         end
 
@@ -106,7 +109,7 @@ function incoming_message_callback(id, payload)
               command_table[i_payload .. ""][i .. ""][current_value .. ""]["type"],
               command_table[i_payload .. ""][i .. ""][current_value .. ""]["value"]
             )
-            print("toggle dataref")
+            print("toggle dataref - " .. i_payload .. ":" .. i)
 
         --if is, send command with timer to end command
           else
@@ -116,7 +119,7 @@ function incoming_message_callback(id, payload)
               command_table[i_payload .. ""][i .. ""][current_value .. ""],
               1
             )
-            print("toggle command")
+            print("toggle command - " .. i_payload .. ":" .. i)
 
             function timer_callback()
               xpl_command(
@@ -249,7 +252,6 @@ function annunciator_callback(
   if (rpm[1] < 392 or rpm[1] > 442)           then payload3 = payload3 + 8 end
 
   --AND with annunciator test
-  local ffff = 65535
   if annunciator_test == 1 then
     payload1 = ffff
     payload2 = ffff
