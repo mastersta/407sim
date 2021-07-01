@@ -42,38 +42,6 @@ SiMessagePort* messagePort;
 
 /*-------------------------------------------------------------
 
-WATCHDOG TIMER
-Due to occasional locking up of the main loop during repeated
-signals sent to the annunciator, a WDT has been set up to
-attempt to clear the i2c bus and restore functionality.
-
--------------------------------------------------------------*/
-//void watchdogSetup(void) {
-//  cli();
-//  wdt_reset();
-//  //interrupt enabled, reset disabled, 250ms
-//  WDTCSR = 0b01011100;
-//  sei();
-//}
-//
-////called when the watchdog timer elapses without reset
-//ISR(WDT_vect) {
-//
-//  pinMode(3, OUTPUT);
-//
-//  //pulse the clock line 10 times to attempt to clear a hung bus
-//  for (byte i = 0; i < 10; i++) {
-//    digitalWrite(3,LOW);
-//    digitalWrite(3,HIGH);
-//  };
-//
-//};
-
-
-
-
-/*-------------------------------------------------------------
-
 AIR MANAGER CALLBACK FUNCTION
 When `Tick()` is called in the main loop, and a fresh payload
 is ready from Air Manager, this function is called. It splits
@@ -267,9 +235,6 @@ void setup() {
   pinMode(30, OUTPUT);
   digitalWrite(30, LOW);
 
-  //calls the WDT setup function
-  //watchdogSetup();
-  
   //tlc init 
   tlcmanager.init();
   tlcmanager.broadcast().set_milliamps(20, 1000);
@@ -326,9 +291,6 @@ MAIN LOOP
 
 -------------------------------------------------------------*/
 void loop() {
-
-  //reset the WDT; 250ms without reset will call the interrupt function
-  //wdt_reset();
 
   //read the analog boards, store the values in the array
   anexmanager.values.cyclic[0] = anexmanager.cyclic.readADC_SingleEnded(0);
