@@ -288,7 +288,7 @@ uint32_t * handle_encoders() {
 
     //heading bug encoder
     case 2: //pin A
-      if (last_int_val == bitRead(previous_encoder_data,1)) {
+      if (last_int_val == bitRead(previous_encoder_data,3)) {
         if (last_int_val == 1) {
           encoder_counts[1]++;
         } else {
@@ -299,7 +299,7 @@ uint32_t * handle_encoders() {
       break;
 
     case 3: //pin B
-      if (last_int_val == bitRead(previous_encoder_data,0)) {
+      if (last_int_val == bitRead(previous_encoder_data,2)) {
         if (last_int_val == 1) {
           encoder_counts[1]--;
         } else {
@@ -312,7 +312,7 @@ uint32_t * handle_encoders() {
 
     //HSI course indicator encoder
     case 4: //pin A
-      if (last_int_val == bitRead(previous_encoder_data,1)) {
+      if (last_int_val == bitRead(previous_encoder_data,5)) {
         if (last_int_val == 1) {
           encoder_counts[2]++;
         } else {
@@ -323,7 +323,7 @@ uint32_t * handle_encoders() {
       break;
 
     case 5: //pin B
-      if (last_int_val == bitRead(previous_encoder_data,0)) {
+      if (last_int_val == bitRead(previous_encoder_data,4)) {
         if (last_int_val == 1) {
           encoder_counts[2]--;
         } else {
