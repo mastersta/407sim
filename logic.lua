@@ -1,5 +1,4 @@
 --407simV2 hardware communication instrument
-
 --global variables
 counter = 0
 timer_delay = 10
@@ -44,114 +43,123 @@ end
 
 function incoming_message_callback(id, payload)
 
-  if id == 1 then
-  --[[
-    table of all the commands to be applied when a switch changes state
-    the format is as follows:
-    
-    [payload number] {
-      [input number] {
-        [input engaged value] = "desired command",
-        [input disengaged value] = "desired command"
-      },
-      [input number] {
-        [input engaged value] {
-          ["dataref"] = "desired dataref",
-          ["value"] = desired value
-        },
-        [input disengaged value] {
-          ["dataref"] = "desired dataref",
-          ["value"] = desired value
-        }
-      },
-      ...further inputs
+--[[
+  table of all the commands to be applied when a switch changes state
+  the format is as follows:
+  
+  [payload number] {
+    [input number] {
+      [input engaged value] = "desired command",
+      [input disengaged value] = "desired command"
     },
-    ...further payloads
-    ]]--
+    [input number] {
+      [input engaged value] {
+        ["dataref"] = "desired dataref",
+        ["value"] = desired value
+      },
+      [input disengaged value] {
+        ["dataref"] = "desired dataref",
+        ["value"] = desired value
+      }
+    },
+    ...further inputs
+  },
+  ...further payloads
+  ]]--
 
 
 
-  --compare each payload to previous iteration; if a bit is different than its previous iteration,
-  --run the approprate command through a timer depending on which direction it changed as
-  --switches that are ON are 0 due to the pullups
+--compare each payload to previous iteration; if a bit is different than its previous iteration,
+--run the approprate command through a timer depending on which direction it changed as
+--switches that are ON are 0 due to the pullups
+  if id == 1 then
+  print("incoming payload")  
+  --iterate over payloads
+  for i_payload, v_payload in ipairs(payload) do
 
-    print("incoming payload")  
-    --iterate over payloads
-    for i_payload, v_payload in ipairs(payload) do
+    --iterate over inputs
+    for i = 1, 8 do
 
-      --iterate over inputs
-      for i = 1, 8 do
+      local current_value = bitread(payload[i_payload], i)
+      local previous_value = bitread(previous_payload_in[i_payload], i)
+      if command_table[i_payload .. ""][i .. ""]["type"] == "momentary" then
+      
+        if current_value ~= previous_value then
 
-        local current_value = bitread(payload[i_payload], i)
-        local previous_value = bitread(previous_payload_in[i_payload], i)
-        if command_table[i_payload .. ""][i .. ""]["type"] == "momentary" then
+          xpl_command(
+            command_table[i_payload .. ""][i .. ""][0 .. ""],
+            1 - current_value
+          )
+          print("momentary - " .. i_payload .. ":" .. i)
+
+        end
+
+      elseif command_table[i_payload .. ""][i .. ""]["type"] == "toggle" then
+
+      --if input is different than previous
+        if current_value ~= previous_value then
+
+        --use input value as index, check if "dataref" = nil
+          if command_table[i_payload .. ""][i .. ""][current_value .. ""]["dataref"] ~= nil then
+
+          --if not, write "dataref" with "value"
+            xpl_dataref_write(
+              command_table[i_payload .. ""][i .. ""][current_value .. ""]["dataref"],
+              command_table[i_payload .. ""][i .. ""][current_value .. ""]["type"],
+              command_table[i_payload .. ""][i .. ""][current_value .. ""]["value"]
+            )
+            print("toggle dataref - " .. i_payload .. ":" .. i)
+
+        --if is, send command with timer to end command
+          else
         
-          if current_value ~= previous_value then
 
             xpl_command(
-              command_table[i_payload .. ""][i .. ""][0 .. ""],
-              1 - current_value
+              command_table[i_payload .. ""][i .. ""][current_value .. ""],
+              1
             )
-            print("momentary - " .. i_payload .. ":" .. i)
+            print("toggle command - " .. i_payload .. ":" .. i)
 
-          end
-
-        elseif command_table[i_payload .. ""][i .. ""]["type"] == "toggle" then
-
-        --if input is different than previous
-          if current_value ~= previous_value then
-
-          --use input value as index, check if "dataref" = nil
-            if command_table[i_payload .. ""][i .. ""][current_value .. ""]["dataref"] ~= nil then
-
-            --if not, write "dataref" with "value"
-              xpl_dataref_write(
-                command_table[i_payload .. ""][i .. ""][current_value .. ""]["dataref"],
-                command_table[i_payload .. ""][i .. ""][current_value .. ""]["type"],
-                command_table[i_payload .. ""][i .. ""][current_value .. ""]["value"]
-              )
-              print("toggle dataref - " .. i_payload .. ":" .. i)
-
-          --if is, send command with timer to end command
-            else
-          
-
+            function timer_callback()
               xpl_command(
                 command_table[i_payload .. ""][i .. ""][current_value .. ""],
-                1
-              )
-              print("toggle command - " .. i_payload .. ":" .. i)
-
-              function timer_callback()
-                xpl_command(
-                  command_table[i_payload .. ""][i .. ""][current_value .. ""],
-                  0
-                )
-              end
-
-              timer_start(
-                timer_delay,
-                timer_callback
+                0
               )
             end
+
+            timer_start(
+              timer_delay,
+              timer_callback
+            )
           end
         end
       end
     end
+  end
 
-
-
-    --assign most recent payload to previous payload
-    for index, value in ipairs(payload) do
-      previous_payload_in[index] = payload[index]
-    end
+  --assign most recent payload to previous payload
+  for index, value in ipairs(payload) do
+    previous_payload_in[index] = payload[index]
+  end
 
   end
 
   if id == 2 then
-    print(payload) --print incoming to see if it's working
-    --TODO: handle encoder counts
+    print(payload)
+
+    --altimeter
+    --sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot [FLOAT]
+
+    --heading bug
+    --sim/cockpit/autopilot/heading [?] [FLOAT]
+
+    --OBS
+    --sim/cockpit2/radios/actuators/nav1_obs_deg_mag_pilot [FLOAT]
   end
+
+
+
+
 
 end --function end
 

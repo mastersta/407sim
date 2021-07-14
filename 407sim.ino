@@ -9,7 +9,6 @@
 
 //misc defines
 #define i2c_speed 100000 //increase later after testing
-#define outgoing_delay 50
 
 //ledd = TLC59017 led driver
 #define addr_ledd_panel1 0
@@ -29,13 +28,13 @@
 #define addr_ioex_panel2 3 //0x23
 
 //payload globals
-#define switch_message_id = 1;
-uint8_t outgoing_payload[4] = {};
-uint8_t previous_outgoing_payload[4] = {};
+#define switch_message_id 1
+uint8_t switch_payload[4] = {};
+uint8_t previous_switch_payload[4] = {};
 
-#define encoder_message_id = 2;
-int32_t encoder_counts[3] = {};
-int32_t previous_encoder_counts[3] = {};
+#define encoder_message_id 2
+int32_t encoder_counts[8] = {};
+int32_t previous_encoder_counts[8] = {};
 
 //interrupt handling
 #define encoder_interrupt_pin 7
@@ -256,86 +255,21 @@ increment/decrement to the dataraf in question
 -------------------------------------------------------------*/
 void handle_encoders() {
   
+  
   encoder_flag = false;
 
-  static uint16_t previous_encoder_data= 0;  //tracks previous state of encoders
-
   uint8_t last_int_pin = ioexmanager.panel2.getLastInterruptPin();
-  uint8_t last_int_val = ioexmanager.panel2.getLastInterruptPinValue();
+  uint8_t next_int_pin = last_int_pin + 1;
+  uint8_t int_cap_val = ioexmanager.panel2.getInterruptCaptureValue();
+  uint8_t count_index = last_int_pin / 2;
 
-  switch (last_int_pin) {
-
-    //altimeter encoder
-    case 0: //pin A
-      if (last_int_val == bitRead(previous_encoder_data,1)) {
-        if (last_int_val == 1) {
-          encoder_counts[0]++;
-        } else {
-          encoder_counts[0]--;
-        };
-      };
-      bitWrite(previous_encoder_data, 0, last_int_val);
-      break;
-
-    case 1: //pin B
-      if (last_int_val == bitRead(previous_encoder_data,0)) {
-        if (last_int_val == 1) {
-          encoder_counts[0]--;
-        } else {
-          encoder_counts[0]++;
-        };
-      };
-      bitWrite(previous_encoder_data, 1, last_int_val);
-      break;
-
-
-    //heading bug encoder
-    case 2: //pin A
-      if (last_int_val == bitRead(previous_encoder_data,3)) {
-        if (last_int_val == 1) {
-          encoder_counts[1]++;
-        } else {
-          encoder_counts[1]--;
-        };
-      };
-      bitWrite(previous_encoder_data, 2, last_int_val);
-      break;
-
-    case 3: //pin B
-      if (last_int_val == bitRead(previous_encoder_data,2)) {
-        if (last_int_val == 1) {
-          encoder_counts[1]--;
-        } else {
-          encoder_counts[1]++;
-        };
-      };
-      bitWrite(previous_encoder_data, 3, last_int_val);
-      break;
-
-
-    //HSI course indicator encoder
-    case 4: //pin A
-      if (last_int_val == bitRead(previous_encoder_data,5)) {
-        if (last_int_val == 1) {
-          encoder_counts[2]++;
-        } else {
-          encoder_counts[2]--;
-        };
-      };
-      bitWrite(previous_encoder_data, 4, last_int_val);
-      break;
-
-    case 5: //pin B
-      if (last_int_val == bitRead(previous_encoder_data,4)) {
-        if (last_int_val == 1) {
-          encoder_counts[2]--;
-        } else {
-          encoder_counts[2]++;
-        };
-      };
-      bitWrite(previous_encoder_data, 5, last_int_val);
-      break;
+  if (bitRead(int_cap_val, last_int_pin % 8) != bitRead(int_cap_val, next_int_pin % 8)) {
+    encoder_counts[count_index]++;
+  } else {
+    encoder_counts[count_index]--;
   };
+
+  uint16_t throwaway = ioexmanager.panel2.readGPIOAB();
 
 };
 
@@ -351,6 +285,8 @@ void setup() {
   
   pinMode(17, OUTPUT);
   digitalWrite(17, LOW);
+  pinMode(30, OUTPUT);
+  digitalWrite(30, LOW);
 
   attachInterrupt(digitalPinToInterrupt(encoder_interrupt_pin), encoder_interrupt, FALLING);
 
@@ -383,6 +319,11 @@ void setup() {
   ioexmanager.panel2.begin(addr_ioex_panel2);
  
   for (byte i = 0; i < 16; i++) {
+    ioexmanager.cyclic.pinMode(i, INPUT);
+    ioexmanager.collective.pinMode(i, INPUT);
+    ioexmanager.panel1.pinMode(i, INPUT);
+    ioexmanager.panel2.pinMode(i, INPUT);
+
     ioexmanager.cyclic.pullUp(i, HIGH);
     ioexmanager.collective.pullUp(i, HIGH);
     ioexmanager.panel1.pullUp(i, HIGH);
@@ -390,11 +331,11 @@ void setup() {
   }
 
   //setup the correct MCP pins as interrupt-triggers
-  //do not mirror INTA and INTB, open-drain, trigger with low state
+  //mirror INTA and INTB, not open-drain, trigger with low state
   ioexmanager.panel2.setupInterrupts(true,false,LOW);
   
   //set all pins on panel2 ioex as interrupts on change in value
-  for (int i = 0; i++; i < 16) {
+  for (int i = 0; i < 16; i+=2) {
     ioexmanager.panel2.setupInterruptPin(i, CHANGE);
   };
   
@@ -480,42 +421,37 @@ void loop() {
 //send the joystick data to the sim
   joystick.sendState();
 
-  //send outgoing data to sim
-  static unsigned long previous_time = 0;
-
   if (encoder_flag) { handle_encoders(); };
+
+  //build the switch payload
+  switch_payload[0] = ioexmanager.values.collective; //low half (top cut off)
+  switch_payload[1] = (ioexmanager.values.collective >> 8); //high half
+  switch_payload[2] = ioexmanager.values.panel1;  //low half (top cut off)
+  switch_payload[3] = (ioexmanager.values.panel1 >> 8); //high half
 
   bool payload_changed = false;
   for (byte i = 0; i < 4; i++) {
-    if (outgoing_payload[i] != previous_outgoing_payload[i]) { payload_changed = true; };
+    if (switch_payload[i] != previous_switch_payload[i]) { payload_changed = true; };
   };
-
-  for (byte i = 0; i < 3; i++) {
-    if (encoder_counts[i] != previous_encoder_counts[i]) { payload_changed = true; };
-  }
-
   if (payload_changed) {
-    
-    //build the switch payload
-    uint8_t switch_payload[4] = {
-      ioexmanager.values.collective, //low half (top cut off)
-      (ioexmanager.values.collective >> 8), //high half
-      ioexmanager.values.panel1,  //low half (top cut off)
-      (ioexmanager.values.panel1 >> 8) //high half
-    };
-
     messagePort->SendMessage(switch_message_id, switch_payload, 4); //TODO: ensure to update len
-    messagePort->SendMessage(encoder_message_id, encoder_counts, 3);
-
+    for (byte i = 0; i < 4; i++) {
+      previous_switch_payload[i] = switch_payload[i];
+    };
   };
   
-  for (byte i = 0; i < 6; i++) {
-    previous_outgoing_payload[i] = outgoing_payload[i];
+  payload_changed = false;
+  for (byte i = 0; i < 8; i++) {
+    if (encoder_counts[i] != previous_encoder_counts[i]) { payload_changed = true; };
+  }
+  if (payload_changed) {
+    messagePort->SendMessage(encoder_message_id, encoder_counts, 8);
+    for (byte i = 0; i < 8; i++) {
+      previous_encoder_counts[i] = encoder_counts[i];
+    };
   };
 
-  for (byte i = 0; i < 3; i++) {
-    previous_encoder_counts[i] = encoder_counts[i];
-  };
+
 
   //check for new payload from AM, run the callback function if new payload is ready
   messagePort->Tick();
