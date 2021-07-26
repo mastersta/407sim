@@ -1,0 +1,79 @@
+-----COLLECTIVE-----
+starter engage            sim/engines/engage_starters?
+starter disengage         sim/starters/shut_down?
+landing lights both       FlyWithLua/407/landing_lights_both
+landing lights forward    FlyWithLua/407/landing_lights_fwd           **OFF STATE
+landing lights off        FlyWithLua/407/landing_lights_off
+float engage              B407/float_inflate
+float arm                 B407/float_arm
+float disarm              B407/Float_Arm = 0                          **OFF STATE           **DATAREF WRITE
+idle stop                 B407/flight_controls/throttle_latch
+
+-----OVERHEAD-----
+battery on                sim/electrical/battery_1_on
+battery off               sim/electrical/battery_1_off                **OFF STATE
+generator on              sim/electrical/generator_1_on
+generator off             sim/electrical/generator_1_off              **OFF STATE
+generator reset           sim/electrical/generator_1_reset
+anti collision lt on      B407/overhead/on/anticollision_lt
+anti collision lt off     B407/overhead/on/anticollision_lt           **OFF STATE
+strobe on                 NYI
+strobe off                NYI                                         **OFF STATE
+hydraulics on             B407/overhead/on/hydr_sys
+hydraulics off            B407/overhead/off/hydr_sys                  **OFF STATE
+avionics master on        B407/overhead/on/avionics_master
+avionics master off       B407/overhead/off/avionics_master           **OFF STATE
+engine anti ice on        B407/overhead/on/eng_antiice
+engine anti ice off       B407/overhead/off/eng_antiice               **OFF STATE
+pitot heat on             B407/overhead/on/pitot_heater
+pitot heat off            B407/overhead/off/pitot_heater              **OFF STATE
+defog on                  B407/overhead/on/defog                                                                Exclude
+defog off                 B407/overhead/off/defog                     **OFF STATE                               Exclude
+position lts on           B407/overhead/on/pos_lt
+position lts off          B407/overhead/off/pos_lt                    **OFF STATE
+cabin lt on               B407/overhead/on/cabin_lt                                                             Potential Exclude
+cabin lt off              B407/overhead/off/cabin_lt                  **OFF STATE                               Potential Exclude
+caution dim on            B407/overhead/on/dim_caution_lt
+caution dim off           B407/overhead/off/dim_caution_lt            **OFF STATE
+heater on                 B407/overhead/on/heater                                                               Exclude
+heater off                B407/overhead/off/heater                    **OFF STATE                               Exclude
+blower aft high           B407/Overhead/Swt_Air_Cond_AFT = 1.0                              **DATAREF WRITE     Exclude
+blower aft off            B407/Overhead/Swt_Air_Cond_AFT = 0.5        **OFF STATE           **DATAREF WRITE     Exclude
+blower aft low            B407/Overhead/Swt_Air_Cond_AFT = 0.0                              **DATAREF WRITE     Exclude
+blower fwd high           B407/Overhead/Swt_Air_Cond_FWD = 1.0                              **DATAREF WRITE     Exclude
+blower fwd off            B407/Overhead/Swt_Air_Cond_FWD = 0.5        **OFF STATE           **DATAREF WRITE     Exclude
+blower fwd low            B407/Overhead/Swt_Air_Cond_FWD = 0.0                              **DATAREF WRITE     Exclude
+air cond on               B407/overhead/on/air_cond_blo                                                         Exclude
+left fuel boost on        B407/overhead/on/boostxfr_left
+left fuel boost off       B407/overhead/off/boostxfr_left             **OFF STATE
+right fuel boost on       B407/overhead/on/boostxfr_right
+right fuel boost off      B407/overhead/off/boostxfr_right            **OFF STATE
+dg on                     B407/overhead/on/flightinstr_dg
+dg off                    B407/overhead/off/flightinstr_dg            **OFF STATE
+att on                    B407/overhead/on/flightinstr_att
+att off                   B407/overhead/off/flightinstr_att           **OFF STATE
+turn on                   B407/overhead/on/flightinstr_turn
+turn off                  B407/overhead/off/flightinstr_turn          **OFF STATE
+
+-----CIRCUIT BREAKERS-----
+//TODO
+
+-----PANEL-----
+fuel valve on             sim/fuel/fuel_selector_all
+fuel valve off            sim/fuel/fuel_selector_none                 **OFF STATE
+annunciator test          sim/annunciator/test_all_annunciators
+horn mute                 B407/horn_mute
+instrument check          B407/instr_check
+lcd test                  B407/lcd_test
+fuel qty                  B407/fuelqty
+fadec horn test           B407/fadec_horn
+overspeed test            **OPEN**
+kollsman encoder          //TODO
+hsi hdg bug encoder       //TODO
+hsi obs encoder           //TODO
+cdi source toggle         sim/GPS/g430n1_cdi
+fadec mode                B407/systems/toggle/Fadec
+pedal stop                B407/systems/toggle/PedalStop
+oat/volts                 //TODO inter instrument
+select                    //TODO inter instrument
+control                   //TODO inter instrument

@@ -31,6 +31,8 @@ Resources for a two-seater home cockpit based around the Dreamfoil Bell 407 for 
 
 ☑ Primary flight controls input from hardware to analog joystick inputs
 
+☑ Digital hardware inputs into simulator
+
 ☐ Overhead panel constructed
 
 ☐ Overhead panel expander board created
@@ -38,8 +40,6 @@ Resources for a two-seater home cockpit based around the Dreamfoil Bell 407 for 
 ☐ GPS panel constructed
 
 ☐ GPS panel expander board created
-
-☐ Digital hardware inputs into simulator
 
 
 ## Overview
