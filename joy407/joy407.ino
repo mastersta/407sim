@@ -13,7 +13,7 @@
 #include "lib407_io.h"
 #include "lib407_interlock.h"
 
-const byte interlock_pin = 4;
+const byte interlock_pin = 7;
 const unsigned long interlock_wait = 1000;
 interlock interlock(interlock_pin, interlock_wait);
 
@@ -28,7 +28,7 @@ Defines how many buttons and which axes to report to the PC/sim
 Joystick_ joystick(
   JOYSTICK_DEFAULT_REPORT_ID,
   JOYSTICK_TYPE_JOYSTICK,
-  6,      //buttons
+  7,      //buttons
   1,      //hats
   true,   //x axis [roll]
   true,   //y axis [pitch]
@@ -70,6 +70,8 @@ void setup() {
   /*===Setup the debug LED===================================*/
   pinMode(17, OUTPUT);
   digitalWrite(17, LOW);
+  pinMode(30, OUTPUT);
+  digitalWrite(30, LOW);
 
 
   /*===Grab the I2C bus via interlock========================*/
@@ -115,7 +117,6 @@ board to release the interlock line before using the I2C bus
 void loop() {
 
   /*===Interlock Handling=====================================*/
-  interlock.wait_for_interlock();
   interlock.engage();
 
 
@@ -150,11 +151,32 @@ void loop() {
   joystick.setHatSwitch(0, hat_direction(cyclic_hat_array));
 
 
+  //store the lowest throttle value for the idle stop detection,
+  //throttle is reversed so max is used
+  static int lowest_throttle = 0;
+  lowest_throttle = max(
+    lowest_throttle,
+    ads_collective.values[1]
+  );
+
+  //if the throttle is in detent
+  if (ads_collective.values[1] > (lowest_throttle * 0.9)) {
+    ads_collective.values[1] = lowest_throttle;
+
+    //apply the idle stop
+    joystick.setButton(6, 1);
+      
+  } else {
+    joystick.setButton(6, 0);
+  }
+
+
   /*===send the joystick data to the sim=====================*/
   joystick.sendState();
 
 
   /*===debug to let us know the main loop is still running===*/
   digitalWrite(17, millis()%1000>500);
+  digitalWrite(30, interlock.is_hung());
 
 }

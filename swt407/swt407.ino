@@ -94,17 +94,6 @@ static void new_message_callback(
 
 /*-------------------------------------------------------------
 
-ANALOG EXPANDER SETUP
-The collective idle stop requires knowing the throttle position
-
--------------------------------------------------------------*/
-analog_expander ads_collective      (addr_ads_collective);
-
-
-
-
-/*-------------------------------------------------------------
-
 DIGITAL EXPANDER SETUP
 
 -------------------------------------------------------------*/
@@ -174,6 +163,8 @@ void setup() {
   
   pinMode(17, OUTPUT);
   digitalWrite(17, LOW);
+  pinMode(30, OUTPUT);
+  digitalWrite(30, LOW);
 
   attachInterrupt(digitalPinToInterrupt(encoder_interrupt_pin),
                   encoder_interrupt,
@@ -193,12 +184,6 @@ void setup() {
     SI_MESSAGE_PORT_CHANNEL_A,                //channel
     new_message_callback                      //function to call on message recieve
   );
-
-  //initialize the analog boards
-  //ads_cyclic.init();  //Not used here
-  ads_collective.init();
-  //ads_panel.init();  //Not used here
-  //ads_overhead.init();  //NYI
 
   //initialize the digital boards
   //mcp_cyclic.init_as_switches(); //Not used here
@@ -229,42 +214,12 @@ void loop() {
   //read the digital boards
   mcp_collective.read_and_store();
   mcp_panel1.read_and_store();
-  mcp_panel2.read_and_store();
+  //mcp_panel2.read_and_store(); //don't read here
   //mcp_overhead1.read_and_store();
   //mcp_overhead2.read_and_store();
 
-  //read the throttle
-  ads_collective.read_and_store(1);
-
   //Release the I2C bus
   interlock.disengage();
-
-  //store the lowest throttle value for the idle stop detection,
-  //throttle is reversed so max is used
-  static int lowest_throttle = 0;
-  lowest_throttle = max(
-    lowest_throttle,
-    ads_collective.values[1]
-  );
-
-  //if the throttle is in detent
-  if (ads_collective.values[1] > (lowest_throttle * 0.9)) {
-    ads_collective.values[1] = lowest_throttle;
-
-    //apply the idle stop
-    bitWrite(
-      mcp_collective.values,
-      6,  //idle stop
-      0   //apply idle stop
-    );
-      
-  } else {
-    bitWrite(
-      mcp_collective.values,
-      6,  //idle stop
-      1   //remove idle stop
-    );
-  }
 
   if (encoder_flag) { handle_encoders(); };
 
@@ -289,6 +244,8 @@ void loop() {
     if (switch_payload[i] != previous_switch_payload[i]) { payload_changed = true; };
   };
 
+  if (encoder_flag) { handle_encoders(); };
+
   //send it out if so
   if (payload_changed) {
     messagePort->SendMessage(switch_message_id, switch_payload, sp_len);
@@ -305,5 +262,6 @@ void loop() {
 
   //debug to let us know the main loop is still running
   digitalWrite(17, millis()%1000>500);
+  digitalWrite(30, interlock.is_hung());
 
 };
