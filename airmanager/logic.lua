@@ -14,6 +14,9 @@ previous_payload_out = {0,0,0,0}
 command_table = static_data_load("command_table.json")
 payload_counter = 0
 ffff = 65535
+store_alt = 0
+store_hdg = 0
+store_obs = 0
 
 --helper functions
 function numtobool(input)
@@ -73,7 +76,7 @@ function incoming_message_callback(id, payload)
 --run the approprate command through a timer depending on which direction it changed as
 --switches that are ON are 0 due to the pullups
   if id == 1 then
-  print("incoming payload")  
+--  print("incoming payload")  
   --iterate over payloads
   for i_payload, v_payload in ipairs(payload) do
 
@@ -145,26 +148,49 @@ function incoming_message_callback(id, payload)
   end
 
   if id == 2 then
-    print(payload)
 
     --altimeter
     --sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot [FLOAT]
+    altimeter_setting = store_alt + (payload[1] * -0.01)
+    xpl_dataref_write(
+      "sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot",
+      "FLOAT",
+      altimeter_setting
+    )
 
     --heading bug
     --sim/cockpit/autopilot/heading [?] [FLOAT]
+    heading_setting = store_hdg + (payload[2] * -1)
+    xpl_dataref_write(
+      "sim/cockpit/autopilot/heading",
+      "FLOAT",
+      heading_setting
+    )
 
     --OBS
-    --sim/cockpit2/radios/actuators/nav1_obs_deg_mag_pilot [FLOAT]
+    --sim/cockpit2/radios/actuators/hsi_obs_deg_mag_pilot [FLOAT]
+    obs_setting = math.floor(payload[3] * -1)
+    xpl_dataref_write(
+      "sim/cockpit2/radios/actuators/hsi_obs_deg_mag_pilot",
+      "FLOAT",
+      obs_setting
+    )
   end
-
-
-
-
 
 end --function end
 
-id = hw_message_port_add("ARDUINO_LEONARDO_A", incoming_message_callback)
+encoder_init = false
 
+function encoder_update_callback(alt, hdg, obs)
+  if not(encoder_init) then
+    store_alt = alt
+    store_hdg = hdg
+    store_obs = obs
+    encoder_init = true
+  end
+end
+
+id = hw_message_port_add("ARDUINO_LEONARDO_A", incoming_message_callback)
 
 
 function annunciator_callback(
@@ -305,6 +331,14 @@ function annunciator_callback(
 
 
 end
+
+
+xpl_dataref_subscribe(
+  "sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot", "FLOAT",
+  "sim/cockpit/autopilot/heading", "FLOAT",
+  "sim/cockpit2/radios/actuators/hsi_obs_deg_mag_pilot", "FLOAT",
+  encoder_update_callback
+)
 
 
 xpl_dataref_subscribe(
