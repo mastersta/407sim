@@ -41,7 +41,7 @@ Resources for a two-seater home cockpit based around the Dreamfoil Bell 407 for 
 
 ## Next Steps
 
-###Software side
+### Software side
 
 --Refactor Air Manager script(s)
 
@@ -49,7 +49,7 @@ Resources for a two-seater home cockpit based around the Dreamfoil Bell 407 for 
 
 --Standardize formatting across all scripts
 
-###Hardware side
+### Hardware side
 
 --Mount and wire in overhead switches, backlighting
 
