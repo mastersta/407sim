@@ -144,7 +144,6 @@ void loop() {
   }
 
 
-  //TODO: Read and apply collective buttons and switches
   for (byte i = 7; i < 13; i++) {
     joystick.setButton(i, !bitRead(mcp_collective.values, i - 7));
   };
