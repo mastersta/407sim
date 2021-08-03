@@ -4,7 +4,6 @@
 #include <si_message_port.hpp>
 
 #include "lib407_io.h"
-#include "lib407_interlock.h"
 
 //tlc addresses
 #define addr_tlc_panel1 0
@@ -30,10 +29,6 @@ TLC59116Manager tlcmanager(Wire, i2c_speed);
 
 //init messageport
 SiMessagePort* messagePort;
-
-//init interlock
-#define interlock_pin 6
-interlock interlock(interlock_pin, 1000);
 
 
 
@@ -79,9 +74,7 @@ static void new_message_callback(
       };
 
       //set the outputs according to the pwm data
-      interlock.engage();
       tlcmanager[i].set_outputs(annunciator_pwm[i]);
-      interlock.disengage();
       
     };
 
@@ -97,8 +90,6 @@ static void new_message_callback(
 DIGITAL EXPANDER SETUP
 
 -------------------------------------------------------------*/
-//digital_expander mcp_cyclic         (addr_mcp_cyclic); //Not used here
-digital_expander mcp_collective     (addr_mcp_collective);
 digital_expander mcp_panel1         (addr_mcp_panel1);
 digital_expander mcp_panel2         (addr_mcp_panel2);
 //digital_expander mcp_overhead1      (addr_mcp_overhead1); //NYI
@@ -127,8 +118,6 @@ void handle_encoders() {
 
   static int32_t encoder_counts[8] = {};
 
-  interlock.engage();
-
   uint8_t last_int_pin = mcp_panel2.board.getLastInterruptPin();
   uint8_t next_int_pin = last_int_pin + 1;
   uint8_t int_cap_val = mcp_panel2.board.getInterruptCaptureValue();
@@ -142,8 +131,6 @@ void handle_encoders() {
   };
 
   uint16_t throwaway = mcp_panel2.board.readGPIOAB();
-
-  interlock.disengage();
 
   //send the current set of encoder counts to air manager
   messagePort->SendMessage(encoder_message_id,
@@ -163,15 +150,10 @@ void setup() {
   
   pinMode(17, OUTPUT);
   digitalWrite(17, LOW);
-  pinMode(30, OUTPUT);
-  digitalWrite(30, LOW);
 
   attachInterrupt(digitalPinToInterrupt(encoder_interrupt_pin),
                   encoder_interrupt,
                   FALLING);
-
-  //grab the I2C line
-  interlock.engage();
 
   //tlc init 
   tlcmanager.init();
@@ -186,16 +168,11 @@ void setup() {
   );
 
   //initialize the digital boards
-  //mcp_cyclic.init_as_switches(); //Not used here
-  mcp_collective.init_as_switches();
   mcp_panel1.init_as_switches();
   mcp_panel2.init_as_encoders();
   //mcp_overhead1.init_as_switches(); //NYI
   //mcp_overhead2.init_as_switches(); //NYI
 
-  //release the I2C line
-  interlock.disengage();
-  
 };
 
 
@@ -208,35 +185,26 @@ MAIN LOOP
 -------------------------------------------------------------*/
 void loop() {
 
-  //Grab the I2C bus
-  interlock.engage();
-
   //read the digital boards
-  mcp_collective.read_and_store();
   mcp_panel1.read_and_store();
-  //mcp_panel2.read_and_store(); //don't read here
-  //mcp_overhead1.read_and_store();
-  //mcp_overhead2.read_and_store();
-
-  //Release the I2C bus
-  interlock.disengage();
+  //mcp_panel2.read_and_store();    //encoders, don't read
+  //mcp_overhead1.read_and_store(); //NYI
+  //mcp_overhead2.read_and_store(); //NYI
 
   if (encoder_flag) { handle_encoders(); };
 
   //switch payload handling
-  const byte sp_len = 4;  //TODO: ensure to update len
+  const byte sp_len = 2;  //TODO: ensure to update len
   static uint8_t previous_switch_payload[sp_len] = {};
   uint8_t switch_payload[sp_len] = {};
 
   //build the switch payload
-  switch_payload[0] =  mcp_collective.values; //low half (top cut off)
-  switch_payload[1] = (mcp_collective.values >> 8); //high half
-  switch_payload[2] =  mcp_panel1.values;  //low half (top cut off)
-  switch_payload[3] = (mcp_panel1.values >> 8); //high half
-  //switch_payload[4] =  mcp_overhead1.values;  //low half (top cut off)
-  //switch_payload[5] = (mcp_overhead1.values >> 8); //high half
-  //switch_payload[6] =  mcp_overhead2.values;  //low half (top cut off)
-  //switch_payload[7] = (mcp_overhead2.values >> 8); //high half
+  switch_payload[0] =  mcp_panel1.values;  //low half (top cut off)
+  switch_payload[1] = (mcp_panel1.values >> 8); //high half
+  //switch_payload[2] =  mcp_overhead1.values;  //low half (top cut off)
+  //switch_payload[3] = (mcp_overhead1.values >> 8); //high half
+  //switch_payload[4] =  mcp_overhead2.values;  //low half (top cut off)
+  //switch_payload[5] = (mcp_overhead2.values >> 8); //high half
   
   //check if the payload has changed
   bool payload_changed = false;
@@ -262,6 +230,5 @@ void loop() {
 
   //debug to let us know the main loop is still running
   digitalWrite(17, millis()%1000>500);
-  digitalWrite(30, interlock.is_hung());
 
 };

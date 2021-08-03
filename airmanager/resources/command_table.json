@@ -1,94 +1,4 @@
-{
   "1": {
-    "payload":"collective low",
-
-    "1": {
-      "type":"momentary",
-      "0":"sim/engines/engage_starters"
-    },
-    
-    "2": {
-      "type":"momentary",
-      "0":"sim/starters/shut_down"
-    },
-
-    "3": {
-      "type":"toggle",
-      "0":"FlyWithLua/407/landing_lights_both",
-      "1":"FlyWithLua/407/landing_lights_fwd"
-    },
-
-    "4": {
-      "type":"toggle",
-      "0":"FlyWithLua/407/landing_lights_off",
-      "1":"FlyWithLua/407/landing_lights_fwd"
-    },
-
-    "5": {
-      "type":"momentary",
-      "0":"B407/float_inflate"
-    },
-
-    "6": {
-      "type":"toggle",
-      "0":"B407/float_arm",
-      "1": {
-        "dataref":"B407/Float_Arm",
-        "type":"FLOAT",
-        "value":0
-      }
-    },
-
-    "7": {
-      "type":"toggle",
-      "0":"B407/flight_controls/throttle_latch",
-      "1":"sim/none/none"
-    },
-
-    "8": {
-      "type":"ignore"
-    }
-
-  },
-
-  "2": {
-    "payload":"collective high",
-
-    "1": {
-      "type":"ignore"
-    },
-
-    "2": {
-      "type":"ignore"
-    },
-
-    "3": {
-      "type":"ignore"
-    },
-
-    "4": {
-      "type":"ignore"
-    },
-
-    "5": {
-      "type":"ignore"
-    },
-
-    "6": {
-      "type":"ignore"
-    },
-
-    "7": {
-      "type":"ignore"
-    },
-
-    "8": {
-      "type":"ignore"
-    }
-
-  },
-
-  "3": {
     "payload":"panel1 low",
 
     "1": {
@@ -133,7 +43,7 @@
 
   },
 
-  "4": {
+  "2": {
     "payload":"panel1 high",
 
     "1": {
@@ -175,8 +85,82 @@
 
   },
 
+  "3": {
+    "payload":"overhead1 low",
+
+    "1": {
+      "type":"ignore"
+    },
+
+    "2": {
+      "type":"ignore"
+    },
+
+    "3": {
+      "type":"ignore"
+    },
+
+    "4": {
+      "type":"ignore"
+    },
+
+    "5": {
+      "type":"ignore"
+    },
+
+    "6": {
+      "type":"ignore"
+    },
+
+    "7": {
+      "type":"ignore"
+    },
+
+    "8": {
+      "type":"ignore"
+    }
+
+  },
+
+  "4": {
+    "payload":"overhead1 high",
+
+    "1": {
+      "type":"ignore"
+    },
+
+    "2": {
+      "type":"ignore"
+    },
+
+    "3": {
+      "type":"ignore"
+    },
+
+    "4": {
+      "type":"ignore"
+    },
+
+    "5": {
+      "type":"ignore"
+    },
+
+    "6": {
+      "type":"ignore"
+    },
+
+    "7": {
+      "type":"ignore"
+    },
+
+    "8": {
+      "type":"ignore"
+    }
+
+  },
+
   "5": {
-    "payload":"panel2 low (encoders)",
+    "payload":"overhead2 low",
 
     "1": {
       "type":"ignore"
@@ -213,7 +197,7 @@
   },
 
   "6": {
-    "payload":"panel2 high (NYI)",
+    "payload":"overhead2 high",
 
     "1": {
       "type":"ignore"
