@@ -42,12 +42,19 @@ Resources for a two-seater home cockpit based around the Dreamfoil Bell 407 for 
 ## Next Steps
 
 ###Software side
+
 --Refactor Air Manager script(s)
+
 --Clean up joy407.ino
+
 --Standardize formatting across all scripts
 
 ###Hardware side
+
 --Mount and wire in overhead switches, backlighting
+
 --Create overhead input board and wire into panel bus
+
 --Create GPS panel mount
+
 --Wire in GPS encoders and switches
