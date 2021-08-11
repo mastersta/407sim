@@ -348,8 +348,6 @@ xpl_dataref_subscribe(
 
 
 
-id = hw_message_port_add("ARDUINO_LEONARDO_A", incoming_message_callback)
-
 function generate_payload(test_button, bus_volts, instr_brt)
 
   --Set brightness
