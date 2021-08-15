@@ -23,8 +23,22 @@ function bitwrite(input, bit, write)
   end
 end
 
-annunciator_payload = {}
-annunciator_previous = {}
+function array_compare(array1, array2)
+  for i,v in pairs(array1) do
+    if v ~= array2[i] then
+      print("array diff")
+      return false
+    end
+  end
+  print("array same")
+  return true
+end
+
+function table.clone(input)
+  return {table.unpack(input)}
+end
+
+annunciator_payload = {0,0,0,0}
 
 function annunciator_write(payload, bit, value)
   annunciator_payload[payload] = bitwrite(
@@ -32,6 +46,7 @@ function annunciator_write(payload, bit, value)
     bit,
     value
   )
+  generate_payload()
 end
 
 --annunciator functions
@@ -111,7 +126,7 @@ end
 --NYI
 
 function af_lfuel_boost(input)
-  output = booltonum(not(input[2]))
+  output = booltonum(input[1] == 0)
   annunciator_write(1, 10, output)
 end
 xpl_dataref_subscribe(
@@ -120,7 +135,7 @@ xpl_dataref_subscribe(
 )
 
 function af_lfuel_xfer(input)
-  output = booltonum(not(input))
+  output = booltonum(input == 0)
   annunciator_write(1, 11, output)
 end
 xpl_dataref_subscribe(
@@ -135,7 +150,7 @@ end
 --NYI
 
 function af_rfuel_boost(input)
-  output = input[2]
+  output = booltonum(input[2] == 0)
   annunciator_write(1, 13, output)
 end
 xpl_dataref_subscribe(
@@ -144,7 +159,7 @@ xpl_dataref_subscribe(
 )
 
 function af_rfuel_xfer(input)
-  output = not(input)
+  output = booltonum(input == 0)
   annunciator_write(1, 14, output)
 end
 xpl_dataref_subscribe(
@@ -200,7 +215,7 @@ end
 --NYI
 
 function af_manual_fadec(input)
-  output = not(input)
+  output = booltonum(input == 0)
   annunciator_write(2, 5, output)
 end
 xpl_dataref_subscribe(
@@ -252,7 +267,7 @@ xpl_dataref_subscribe(
 
 function af_instr_check(input1, input2, input3)
   output = booltonum(
-    input1 + input2 + input3 > 0
+    (input1 + input2 + input3) > 0
   )
   annunciator_write(2, 11, output)
 end
@@ -306,8 +321,8 @@ end
 
 function af_cyclic_centering(input1, input2, input3)
   output = booltonum(
-    input1 and
-    (math.abs(input2) > 0.042 or math.abs(input3) > 0.068)
+    (input3 == 1) and
+    (math.abs(input1) > 0.042 or math.abs(input2) > 0.068)
   )
   annunciator_write(3, 1, output)
 end
@@ -328,7 +343,7 @@ xpl_dataref_subscribe(
 )
 
 function af_pedal_stop(input)
-  output = not(input)
+  output = booltonum(input == 1)
   annunciator_write(3, 3, output)
 end
 xpl_dataref_subscribe(
@@ -345,26 +360,32 @@ xpl_dataref_subscribe(
   af_rpm
 )
 
+test_button = 0
+bus_volts = 0
+instr_brt = 1
 
+function update_annunciator_misc(a,b,c)   --TODO: Clean up
+  test_button = a
+  bus_volts = b
+  instr_brt = c[11]
+end
+  
 
-
-function generate_payload(test_button, bus_volts, instr_brt)
-
+function generate_payload()
   --Set brightness
-  annunciator_payload[4] = math.floor(instr_brt[11] * 255)
+  annunciator_payload[4] = math.floor(instr_brt * 255)
 
+  payload_final = table.clone(annunciator_payload)
+  
   --Apply test button
   if test_button == 1 then
-    annunciator_payload[1] = 65535
-    annunciator_payload[2] = 65535
-    annunciator_payload[3] = 15
+    payload_final[1] = 65535
+    payload_final[2] = 65535
+    payload_final[3] = 15
   end
 
-  if not array_compare(annunciator_payload, annunciator_previous) then
-    if hw_connected("ARDUINO_LEONARDO_A") then
-      hw_message_port_send(hw_id, 0, "INT[4]", annunciator_payload)
-      annunciator_previous = annunciator_payload
-    end
+  if hw_connected("ARDUINO_LEONARDO_A") then
+    hw_message_port_send(hw_id, 0, "INT[4]", payload_final)
   end
 
 end
@@ -379,5 +400,5 @@ xpl_dataref_subscribe(
   --instr brt
     "sim/cockpit2/switches/instrument_brightness_ratio","FLOAT[32]", 
 
-  generate_payload
+  update_annunciator_misc
 )

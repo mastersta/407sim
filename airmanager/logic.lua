@@ -15,14 +15,14 @@ store_hdg = 0
 store_obs = 0
 
 --helper functions
-function array_compare(array1, array2)
-  for i,v in pairs(array1) do
-    if v ~= array2[i] then
-      return false
-    end
-  end
-  return true
-end
+--function array_compare(array1, array2)
+--  for i,v in pairs(array1) do
+--    if v ~= array2[i] then
+--      return false
+--    end
+--  end
+--  return true
+--end
 
 --compare each payload to previous iteration; if a bit is different than its previous iteration,
 --run the approprate command through a timer depending on which direction it changed as
@@ -30,13 +30,12 @@ end
 function incoming_message_callback(id, payload)
 
   if id == 1 then
-
+    
     --iterate over payloads
     for iter_payload, val_payload in ipairs(payload) do
 
       --iterate over inputs
       for i = 1, 8 do
-
         local current_value = bitread(payload[iter_payload], i)
         local previous_value = bitread(previous_payload_in[iter_payload], i)
         if command_table[iter_payload .. ""][i .. ""]["type"] == "momentary" then
@@ -144,7 +143,7 @@ function encoder_update_callback(alt, hdg, obs)
   end
 end
 
-id = hw_message_port_add("ARDUINO_LEONARDO_A", incoming_message_callback)
+hw_id = hw_message_port_add("ARDUINO_LEONARDO_A", incoming_message_callback)
 
 
 xpl_dataref_subscribe(
