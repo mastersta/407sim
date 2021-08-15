@@ -265,9 +265,15 @@ xpl_dataref_subscribe(
   af_xmsn_oil_press
 )
 
-function af_instr_check(input1, input2, input3)
+function af_instr_check(input1, input2, input3, input4, input5, input6)
   output = booltonum(
-    (input1 + input2 + input3) > 0
+    ((input1 + input2 + input3) > 0)
+    or
+    (input4[1] > 12000)
+    or
+    (input5[1] > 920)
+    or
+    (input6[1] > 105)
   )
   annunciator_write(2, 11, output)
 end
@@ -275,6 +281,9 @@ xpl_dataref_subscribe(
   "B407/Panel/Exceedance/MGT",                      "FLOAT",
   "B407/Panel/Exceedance/NG",                       "FLOAT",
   "B407/Panel/Exceedance/TRQ",                      "FLOAT",
+  "sim/cockpit2/engine/indicators/torque_n_mtr",    "FLOAT[8]",
+  "sim/cockpit2/engine/indicators/EGT_deg_C",       "FLOAT[8]",
+  "sim/cockpit2/engine/indicators/N1_percent",      "FLOAT[8]",
   af_instr_check
 )
 
@@ -343,7 +352,7 @@ xpl_dataref_subscribe(
 )
 
 function af_pedal_stop(input)
-  output = booltonum(input == 1)
+  output = booltonum(input == 0)
   annunciator_write(3, 3, output)
 end
 xpl_dataref_subscribe(
