@@ -1,42 +1,9 @@
---helper functions
-function numtobool(input)
-  if input == 0 then return false
-  else return true
-  end
-end
+--annunciator functions
+--each function contains the logic for the corresponding annunciator light
+--also applies brightness values
 
-function booltonum(input)
-  if input then return 1
-  else return 0
-  end
-end
 
-function bitread(value, bit)
-  return ((value >> (bit - 1)) & 1)
-end
 
-function bitwrite(input, bit, write)
-  if (write > 0) then
-    return input | (1 << (bit - 1))
-  else
-    return input & ~(1 << (bit - 1))
-  end
-end
-
-function array_compare(array1, array2)
-  for i,v in pairs(array1) do
-    if v ~= array2[i] then
-      print("array diff")
-      return false
-    end
-  end
-  print("array same")
-  return true
-end
-
-function table.clone(input)
-  return {table.unpack(input)}
-end
 
 annunciator_payload = {0,0,0,0}
 
@@ -49,6 +16,9 @@ function annunciator_write(payload, bit, value)
   generate_payload()
 end
 
+
+
+
 --annunciator functions
 function af_float_test(input)
   output = input
@@ -59,6 +29,7 @@ xpl_dataref_subscribe(
   af_float_test
 )
 
+
 function af_engine_fire(input)
   output = input
   annunciator_write(1, 2, output)
@@ -67,6 +38,7 @@ xpl_dataref_subscribe(
   "sim/cockpit/warnings/annunciators/engine_fire",  "INT",  
   af_engine_fire
 )
+
 
 function af_engine_anti_ice(input)
   output = input
@@ -77,6 +49,7 @@ xpl_dataref_subscribe(
   af_engine_anti_ice
 )
 
+
 function af_float_arm(input)
   output = input
   annunciator_write(1, 4, output)
@@ -85,6 +58,7 @@ xpl_dataref_subscribe(
   "B407/Float_Arm",                                 "FLOAT",  
   af_float_arm
 )
+
 
 function af_auto_relight(input)
   output = input
@@ -95,6 +69,7 @@ xpl_dataref_subscribe(
   af_auto_relight
 )
 
+
 function af_start(input)
   output = input[1]
   annunciator_write(1, 6, output)
@@ -103,6 +78,7 @@ xpl_dataref_subscribe(
   "sim/flightmodel2/engines/starter_is_running",    "INT[8]",  
   af_start
 )
+
 
 function af_baggage_door(input)
   output = booltonum(input > 0.01)
@@ -113,17 +89,20 @@ xpl_dataref_subscribe(
   af_baggage_door
 )
 
+
 function af_litter_door()
   output = 0
   annunciator_write(1, 8, output)
 end
 --NYI
 
+
 function af_heater_overtemp()
   output = 0
   annunciator_write(1, 9, output)
 end
 --NYI
+
 
 function af_lfuel_boost(input)
   output = booltonum(input[1] == 0)
@@ -134,6 +113,7 @@ xpl_dataref_subscribe(
   af_lfuel_boost
 )
 
+
 function af_lfuel_xfer(input)
   output = booltonum(input == 0)
   annunciator_write(1, 11, output)
@@ -143,11 +123,13 @@ xpl_dataref_subscribe(
   af_lfuel_xfer
 )
 
+
 function af_fuel_filter(input)
   output = 0
   annunciator_write(1, 12, output)
 end
 --NYI
+
 
 function af_rfuel_boost(input)
   output = booltonum(input[2] == 0)
@@ -158,6 +140,7 @@ xpl_dataref_subscribe(
   af_rfuel_boost
 )
 
+
 function af_rfuel_xfer(input)
   output = booltonum(input == 0)
   annunciator_write(1, 14, output)
@@ -166,6 +149,7 @@ xpl_dataref_subscribe(
   "B407/Overhead/Swt_BoostXFR_Right",               "FLOAT",  
   af_rfuel_xfer
 )
+
 
 function af_fuel_valve(input)
   output = input
@@ -176,11 +160,13 @@ xpl_dataref_subscribe(
   af_fuel_valve
 )
 
+
 function af_restart_fault(input)
   output = 0
   annunciator_write(1, 16, output)
 end
 --NYI
+
 
 --========2========
 
@@ -189,6 +175,7 @@ function af_restart_fault(input)
   annunciator_write(2, 1, output)
 end
 --NYI
+
 
 function af_fuel_low(input)
   output = input
@@ -199,6 +186,7 @@ xpl_dataref_subscribe(
   af_fuel_low
 )
 
+
 function af_fadec_fail(input)
   output = booltonum(input == 6)
   annunciator_write(2, 3, output)
@@ -208,11 +196,13 @@ xpl_dataref_subscribe(
   af_fadec_fail
 )
 
+
 function af_fadec_degraded(input)
   output = 0
   annunciator_write(2, 4, output)
 end
 --NYI
+
 
 function af_manual_fadec(input)
   output = booltonum(input == 0)
@@ -223,6 +213,7 @@ xpl_dataref_subscribe(
   af_manual_fadec
 )
 
+
 function af_engine_chip(input)
   output = input
   annunciator_write(2, 6, output)
@@ -232,11 +223,13 @@ xpl_dataref_subscribe(
   af_engine_chip
 )
 
+
 function af_xmsn_chip(input)
   output = 0
   annunciator_write(2, 7, output)
 end
 --NYI
+
 
 function af_tr_chip(input)
   output = booltonum(input == 6)
@@ -247,6 +240,7 @@ xpl_dataref_subscribe(
   af_tr_chip
 )
 
+
 function af_gen_fail(input)
   output = input
   annunciator_write(2, 9, output)
@@ -256,6 +250,7 @@ xpl_dataref_subscribe(
   af_gen_fail
 )
 
+
 function af_xmsn_oil_press(input)
   output = booltonum(input < 3.3)
   annunciator_write(2, 10, output)
@@ -264,6 +259,7 @@ xpl_dataref_subscribe(
   "B407/Panel/XMsn_Oil_Psi",                        "FLOAT",
   af_xmsn_oil_press
 )
+
 
 function af_instr_check(input1, input2, input3, input4, input5, input6)
   output = booltonum(
@@ -287,6 +283,7 @@ xpl_dataref_subscribe(
   af_instr_check
 )
 
+
 function af_battery_rly(input)
   output = input
   annunciator_write(2, 12, output)
@@ -295,6 +292,7 @@ xpl_dataref_subscribe(
   "sim/cockpit/electrical/gpu_on",                  "INT",
   af_battery_rly
 )
+
 
 function af_xmsn_oil_temp(input)
   output = booltonum(input > 11)
@@ -305,6 +303,7 @@ xpl_dataref_subscribe(
   af_xmsn_oil_temp
 )
 
+
 function af_hyd_sys(input)
   output = booltonum(input < 650)
   annunciator_write(2, 14, output)
@@ -313,6 +312,7 @@ xpl_dataref_subscribe(
   "sim/operation/failures/hydraulic_pressure_ratio","FLOAT",
   af_hyd_sys
 )
+
 
 function af_battery_hot(input)
   output = 0
@@ -325,6 +325,7 @@ function af_engine_ovspd(input)
   annunciator_write(2, 16, output)
 end
 --NYI
+
 
 --========3========
 
@@ -342,6 +343,7 @@ xpl_dataref_subscribe(
   af_cyclic_centering
 )
 
+
 function af_engine_out(input)
   output = booltonum(input[1] < 55)
   annunciator_write(3, 2, output)
@@ -350,6 +352,7 @@ xpl_dataref_subscribe(
   "sim/flightmodel2/engines/N1_percent",         "FLOAT[8]",
   af_engine_out
 )
+
 
 function af_pedal_stop(input)
   output = booltonum(input == 0)
@@ -360,6 +363,7 @@ xpl_dataref_subscribe(
   af_pedal_stop
 )
 
+
 function af_rpm(input)
   output = booltonum(input[1] < 392 or input[1] > 442)
   annunciator_write(3, 4, output)
@@ -369,15 +373,18 @@ xpl_dataref_subscribe(
   af_rpm
 )
 
+
+
+
 test_button = 0
-bus_volts = 0
 instr_brt = 1
 
-function update_annunciator_misc(a,b,c)   --TODO: Clean up
-  test_button = a
-  bus_volts = b
-  instr_brt = c[11]
+function update_annunciator_misc(test_button_dataref, instr_brt_dataref)   --TODO: Clean up
+  test_button = test_button_dataref
+  instr_brt = instr_brt_dataref[11]
 end
+
+
   
 
 function generate_payload()
@@ -402,9 +409,6 @@ end
 xpl_dataref_subscribe(
   --annunciator test
     "sim/cockpit/warnings/annunciator_test_pressed",  "INT",
-
-  --bus volts
-    "sim/cockpit2/electrical/bus_volts",              "FLOAT[8]",
 
   --instr brt
     "sim/cockpit2/switches/instrument_brightness_ratio","FLOAT[32]", 
