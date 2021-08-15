@@ -159,8 +159,4 @@ void loop() {
   /*===send the joystick data to the sim=====================*/
   joystick.sendState();
 
-
-  /*===debug to let us know the main loop is still running===*/
-  digitalWrite(17, millis()%1000>500);
-
 }
