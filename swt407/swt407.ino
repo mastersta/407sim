@@ -94,6 +94,7 @@ digital_expander mcp_panel1         (addr_mcp_panel1);
 digital_expander mcp_panel2         (addr_mcp_panel2);
 //digital_expander mcp_overhead1      (addr_mcp_overhead1); //NYI
 //digital_expander mcp_overhead2      (addr_mcp_overhead2); //NYI
+//digital_expander mcp_overhead3      (addr_mcp_overhead3); //NYI
 
 
 
@@ -172,6 +173,7 @@ void setup() {
   mcp_panel2.init_as_encoders();
   //mcp_overhead1.init_as_switches(); //NYI
   //mcp_overhead2.init_as_switches(); //NYI
+  //mcp_overhead3.init_as_switches(); //NYI
 
 };
 
@@ -190,6 +192,7 @@ void loop() {
   //mcp_panel2.read_and_store();    //encoders, don't read
   //mcp_overhead1.read_and_store(); //NYI
   //mcp_overhead2.read_and_store(); //NYI
+  //mcp_overhead3.read_and_store(); //NYI
 
   if (encoder_flag) { handle_encoders(); };
 
@@ -205,6 +208,8 @@ void loop() {
   //switch_payload[3] = (mcp_overhead1.values >> 8); //high half
   //switch_payload[4] =  mcp_overhead2.values;  //low half (top cut off)
   //switch_payload[5] = (mcp_overhead2.values >> 8); //high half
+  //switch_payload[6] =  mcp_overhead3.values;  //low half (top cut off)
+  //switch_payload[7] = (mcp_overhead3.values >> 8); //high half
   
   //check if the payload has changed
   bool payload_changed = false;

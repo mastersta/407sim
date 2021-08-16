@@ -56,7 +56,35 @@ turn on                   B407/overhead/on/flightinstr_turn
 turn off                  B407/overhead/off/flightinstr_turn          **OFF STATE
 
 -----CIRCUIT BREAKERS-----
-//TODO
+fuel valve
+fuel qty
+fuel press
+xmsn oil temp
+xmsn oil press
+mgt
+trq
+ng
+np
+nr
+eng oil temp
+eng oil press
+anti ice
+start
+igniter
+fadec
+hyd system
+oat/v
+amps
+gen reset
+ldg lights pwr
+ldg light cont
+caution lights
+gps
+comm
+vhf 2 comm
+vhf 1 nav/comm
+xpndr
+alt encoding
 
 -----PANEL-----
 fuel valve on             sim/fuel/fuel_selector_all

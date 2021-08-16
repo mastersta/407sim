@@ -19,8 +19,10 @@
 #define addr_mcp_collective 1 //0x21
 #define addr_mcp_panel1     2 //0x22
 #define addr_mcp_panel2     3 //0x23
-#define addr_mcp_overhead1  4 //0x23
-#define addr_mcp_overhead2  5 //0x23
+#define addr_mcp_panel3     4 //0x24
+#define addr_mcp_overhead1  5 //0x25
+#define addr_mcp_overhead2  6 //0x26
+#define addr_mcp_overhead2  7 //0x27
 
 
 /*-------------------------------------------------------------
