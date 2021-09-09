@@ -33,9 +33,11 @@ Resources for a two-seater home cockpit based around the Dreamfoil Bell 407 for 
 
 ☑ Digital hardware inputs into simulator
 
-☐ Overhead panel constructed
+☑ Overhead panel constructed
 
-☐ Overhead panel expander board created
+☑ Overhead panel expander board created
+
+☑ Lua code refactored
 
 ☐ GPS panel constructed
 
@@ -43,17 +45,13 @@ Resources for a two-seater home cockpit based around the Dreamfoil Bell 407 for 
 
 ### Software side
 
---Refactor Air Manager script(s)
-
 --Clean up joy407.ino
 
 --Standardize formatting across all scripts
 
 ### Hardware side
 
---Mount and wire in overhead switches, backlighting
-
---Create overhead input board and wire into panel bus
+--Design circuit breakers and install
 
 --Create GPS panel mount
 
