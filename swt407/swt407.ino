@@ -92,7 +92,7 @@ DIGITAL EXPANDER SETUP
 -------------------------------------------------------------*/
 digital_expander mcp_panel1         (addr_mcp_panel1);
 digital_expander mcp_panel2         (addr_mcp_panel2);
-//digital_expander mcp_overhead1      (addr_mcp_overhead1); //NYI
+digital_expander mcp_overhead1      (addr_mcp_overhead1); //NYI
 //digital_expander mcp_overhead2      (addr_mcp_overhead2); //NYI
 //digital_expander mcp_overhead3      (addr_mcp_overhead3); //NYI
 
@@ -171,7 +171,7 @@ void setup() {
   //initialize the digital boards
   mcp_panel1.init_as_switches();
   mcp_panel2.init_as_encoders();
-  //mcp_overhead1.init_as_switches(); //NYI
+  mcp_overhead1.init_as_switches(); //NYI
   //mcp_overhead2.init_as_switches(); //NYI
   //mcp_overhead3.init_as_switches(); //NYI
 
@@ -190,22 +190,22 @@ void loop() {
   //read the digital boards
   mcp_panel1.read_and_store();
   //mcp_panel2.read_and_store();    //encoders, don't read
-  //mcp_overhead1.read_and_store(); //NYI
+  mcp_overhead1.read_and_store(); //NYI
   //mcp_overhead2.read_and_store(); //NYI
   //mcp_overhead3.read_and_store(); //NYI
 
   if (encoder_flag) { handle_encoders(); };
 
   //switch payload handling
-  const byte sp_len = 2;  //TODO: ensure to update len
+  const byte sp_len = 4;  //TODO: ensure to update len
   static uint8_t previous_switch_payload[sp_len] = {};
   uint8_t switch_payload[sp_len] = {};
 
   //build the switch payload
   switch_payload[0] =  mcp_panel1.values;  //low half (top cut off)
   switch_payload[1] = (mcp_panel1.values >> 8); //high half
-  //switch_payload[2] =  mcp_overhead1.values;  //low half (top cut off)
-  //switch_payload[3] = (mcp_overhead1.values >> 8); //high half
+  switch_payload[2] =  mcp_overhead1.values;  //low half (top cut off)
+  switch_payload[3] = (mcp_overhead1.values >> 8); //high half
   //switch_payload[4] =  mcp_overhead2.values;  //low half (top cut off)
   //switch_payload[5] = (mcp_overhead2.values >> 8); //high half
   //switch_payload[6] =  mcp_overhead3.values;  //low half (top cut off)
