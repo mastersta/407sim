@@ -90,35 +90,51 @@
     "payload":"overhead1 low",
 
     "1": {
-      "type":"ignore"
+      "type":"toggle",
+      "0":"sim/electrical/battery_1_on",
+      "1":"sim/electrical/battery_1_off"
     },
 
     "2": {
-      "type":"ignore"
+      "type":"toggle",
+      "0":"sim/electrical/generator_1_on",
+      "1":"sim/electrical/generator_1_off"
     },
 
     "3": {
-      "type":"ignore"
+      "type":"toggle",
+      "0":"sim/electrical/generator_1_reset",
+      "1":"sim/electrical/generator_1_off"
     },
 
     "4": {
-      "type":"ignore"
+      "type":"toggle",
+      "0":"B407/overhead/on/anticollision_lt",
+      "1":"B407/overhead/off/anticollision_lt"
     },
 
     "5": {
-      "type":"ignore"
+      "type":"toggle",
+      "0":"B407/overhead/on/hydr_sys",
+      "1":"B407/overhead/off/hydr_sys"
     },
 
     "6": {
-      "type":"ignore"
+      "type":"toggle",
+      "0":"B407/overhead/on/avionics_master",
+      "1":"B407/overhead/off/avionics_master"
     },
 
     "7": {
-      "type":"ignore"
+      "type":"toggle",
+      "0":"B407/overhead/on/eng_antiice",
+      "1":"B407/overhead/off/eng_antiice"
     },
 
     "8": {
-      "type":"ignore"
+      "type":"toggle",
+      "0":"B407/overhead/on/pitot_heater",
+      "1":"B407/overhead/off/pitot_heater"
     }
 
   },
@@ -127,7 +143,9 @@
     "payload":"overhead1 high",
 
     "1": {
-      "type":"ignore"
+      "type":"toggle",
+      "0":"B407/overhead/on/pos_lt",
+      "1":"B407/overhead/off/pos_lt"
     },
 
     "2": {
@@ -135,23 +153,33 @@
     },
 
     "3": {
-      "type":"ignore"
+      "type":"toggle",
+      "0":"B407/overhead/on/boostxfr_left",
+      "1":"B407/overhead/off/boostxfr_left"
     },
 
     "4": {
-      "type":"ignore"
+      "type":"toggle",
+      "0":"B407/overhead/on/boostxfr_right",
+      "1":"B407/overhead/off/boostxfr_right"
     },
 
     "5": {
-      "type":"ignore"
+      "type":"toggle",
+      "0":"B407/overhead/on/flightinstr_dg",
+      "1":"B407/overhead/off/flightinstr_dg"
     },
 
     "6": {
-      "type":"ignore"
+      "type":"toggle",
+      "0":"B407/overhead/on/flightinstr_att",
+      "1":"B407/overhead/off/flightinstr_att"
     },
 
     "7": {
-      "type":"ignore"
+      "type":"toggle",
+      "0":"B407/overhead/on/flightinstr_turn",
+      "1":"B407/overhead/off/flightinstr_turn"
     },
 
     "8": {
