@@ -12,7 +12,6 @@ saved_switch_payload = {
 
 
 
-
 --switches that are ON are 0 due to the pullups
 function incoming_message_callback(id, payload)
 
