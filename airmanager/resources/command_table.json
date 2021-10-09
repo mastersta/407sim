@@ -9,7 +9,7 @@
     },
 
     "2": {
-      "type":"momentary",
+      "type":"//momentary",
       "0":"sim/annunciator/test_all_annunciators"
     },
 
@@ -39,7 +39,8 @@
     },
 
     "8": {
-      "type":"ignore"
+      "type":"momentary",
+      "0":"sim/electrical/GPU_toggle"
     }
 
   },
@@ -149,7 +150,17 @@
     },
 
     "2": {
-      "type":"ignore"
+      "type":"toggle",
+      "0": {
+        "dataref":"sim/cockpit2/switches/panel_brightness_ratio",
+        "type":"FLOAT[4]",
+        "value": 0.5
+      },
+      "1": {
+        "dataref":"sim/cockpit2/switches/panel_brightness_ratio",
+        "type":"FLOAT[4]",
+        "value": 1
+      }
     },
 
     "3": {
@@ -192,7 +203,9 @@
     "payload":"overhead2 low",
 
     "1": {
-      "type":"ignore"
+      "type":"toggle",
+      "0":"B407/overhead/on/pitot_heater",
+      "1":"B407/overhead/off/pitot_heater"
     },
 
     "2": {
@@ -229,7 +242,9 @@
     "payload":"overhead2 high",
 
     "1": {
-      "type":"ignore"
+      "type":"toggle",
+      "0":"B407/overhead/on/pitot_heater",
+      "1":"B407/overhead/off/pitot_heater"
     },
 
     "2": {

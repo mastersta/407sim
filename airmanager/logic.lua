@@ -1,6 +1,4 @@
 --407simV2 hardware communication instrument
-
-
 --global variables
 timer_delay = 10
 previous_payload_in = {
@@ -12,9 +10,19 @@ previous_payload_in = {
   255
 }
 command_table = static_data_load("command_table.json")
+store_alt = 0
+store_hdg = 0
+store_obs = 0
 
-
-
+--helper functions
+--function array_compare(array1, array2)
+--  for i,v in pairs(array1) do
+--    if v ~= array2[i] then
+--      return false
+--    end
+--  end
+--  return true
+--end
 
 --compare each payload to previous iteration; if a bit is different than its previous iteration,
 --run the approprate command through a timer depending on which direction it changed as
@@ -22,7 +30,7 @@ command_table = static_data_load("command_table.json")
 function incoming_message_callback(id, payload)
 
   if id == 1 then
-    
+
     --iterate over payloads
     for iter_payload, val_payload in ipairs(payload) do
 
@@ -30,6 +38,8 @@ function incoming_message_callback(id, payload)
       for i = 1, 8 do
         local current_value = bitread(payload[iter_payload], i)
         local previous_value = bitread(previous_payload_in[iter_payload], i)
+        if (i == 7) then print(current_value) end
+
         if command_table[iter_payload .. ""][i .. ""]["type"] == "momentary" then
         
           if current_value ~= previous_value then
@@ -46,7 +56,7 @@ function incoming_message_callback(id, payload)
 
         --if input is different than previous
           if current_value ~= previous_value then
-
+          
           --use input value as index, check if "dataref" = nil
             if command_table[iter_payload .. ""][i .. ""][current_value .. ""]["dataref"] ~= nil then
 
@@ -93,10 +103,10 @@ function incoming_message_callback(id, payload)
   end
 
   if id == 2 then
-
+    print(payload[1])
     --altimeter
     --sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot [FLOAT]
-    altimeter_setting = store_alt + (payload[1] * -0.01)
+    altimeter_setting = 29.92 + (payload[1] * -0.01)
     xpl_dataref_write(
       "sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot",
       "FLOAT",
@@ -122,14 +132,31 @@ function incoming_message_callback(id, payload)
     )
   end
 
+  if id == 3 then
+    output = 1 - math.max(0, math.min(0.9, (payload/1600)))
+    if output <= 0.10 then output = 1 end
+    print("analog: " .. payload .. " -- " .. output)
+    xpl_dataref_write(
+      "sim/cockpit/electrical/instrument_brightness",
+      "FLOAT",
+      output,
+      0)
+  end
+
+end --function end
+
+encoder_init = false
+
+function encoder_update_callback(alt, hdg, obs)
+  if not(encoder_init) then
+    store_alt = alt
+    store_hdg = hdg
+    store_obs = obs
+    encoder_init = true
+  end
 end
 
-
-
-
 hw_id = hw_message_port_add("ARDUINO_LEONARDO_A", incoming_message_callback)
-
-
 
 
 xpl_dataref_subscribe(
