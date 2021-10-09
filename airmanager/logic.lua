@@ -1,6 +1,4 @@
 --407simV2 hardware communication instrument
-
-
 --global variables
 timer_delay = 10
 previous_payload_in = {
@@ -12,9 +10,19 @@ previous_payload_in = {
   255
 }
 command_table = static_data_load("command_table.json")
+store_alt = 0
+store_hdg = 0
+store_obs = 0
 
-
-
+--helper functions
+--function array_compare(array1, array2)
+--  for i,v in pairs(array1) do
+--    if v ~= array2[i] then
+--      return false
+--    end
+--  end
+--  return true
+--end
 
 --compare each payload to previous iteration; if a bit is different than its previous iteration,
 --run the approprate command through a timer depending on which direction it changed as
@@ -93,10 +101,10 @@ function incoming_message_callback(id, payload)
   end
 
   if id == 2 then
-
+    print(payload[1])
     --altimeter
     --sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot [FLOAT]
-    altimeter_setting = store_alt + (payload[1] * -0.01)
+    altimeter_setting = 29.92 + (payload[1] * -0.01)
     xpl_dataref_write(
       "sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot",
       "FLOAT",
@@ -122,14 +130,32 @@ function incoming_message_callback(id, payload)
     )
   end
 
+  if id == 3 then
+    print("analog: " .. payload)
+
+    output = 1 - math.max(0, math.min(1, (payload/1700)))
+    xpl_dataref_write(
+      --"sim/cockpit/electrical/instrument_brightness",
+      "B407/Overhead/Swt_Instrument_Brt",
+      "FLOAT",
+      output,
+      0)
+  end
+
+end --function end
+
+encoder_init = false
+
+function encoder_update_callback(alt, hdg, obs)
+  if not(encoder_init) then
+    store_alt = alt
+    store_hdg = hdg
+    store_obs = obs
+    encoder_init = true
+  end
 end
 
-
-
-
 hw_id = hw_message_port_add("ARDUINO_LEONARDO_A", incoming_message_callback)
-
-
 
 
 xpl_dataref_subscribe(
