@@ -10,9 +10,6 @@ previous_payload_in = {
   255
 }
 command_table = static_data_load("command_table.json")
-store_alt = 0
-store_hdg = 0
-store_obs = 0
 
 --helper functions
 --function array_compare(array1, array2)
@@ -101,33 +98,22 @@ function incoming_message_callback(id, payload)
   end
 
   if id == 2 then
-    print(payload[1])
-    --altimeter
-    --sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot [FLOAT]
-    altimeter_setting = 29.92 + (payload[1] * -0.01)
-    xpl_dataref_write(
-      "sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot",
-      "FLOAT",
-      altimeter_setting
-    )
 
-    --heading bug
-    --sim/cockpit/autopilot/heading [?] [FLOAT]
-    heading_setting = store_hdg + (payload[2] * -1)
-    xpl_dataref_write(
-      "sim/cockpit/autopilot/heading",
-      "FLOAT",
-      heading_setting
-    )
+    for index, value in ipairs(encoder_table) do
 
-    --OBS
-    --sim/cockpit2/radios/actuators/hsi_obs_deg_mag_pilot [FLOAT]
-    obs_setting = math.floor(payload[3] * -1)
-    xpl_dataref_write(
-      "sim/cockpit2/radios/actuators/hsi_obs_deg_mag_pilot",
-      "FLOAT",
-      obs_setting
-    )
+      difference = encoder_table[index].previous - payload[index]
+      new_value = encoder_table[index].simvalue + (difference * encoder_table[index].increment)
+
+      if difference ~= 0 then
+        xpl_dataref_write(
+          encoder_table[index].dataref,
+          encoder_table[index].type,
+          new_value
+        )
+
+        encoder_table[index].previous = payload[index]
+      end
+    end
   end
 
   if id == 3 then
@@ -144,23 +130,46 @@ function incoming_message_callback(id, payload)
 
 end --function end
 
-encoder_init = false
 
-function encoder_update_callback(alt, hdg, obs)
-  if not(encoder_init) then
-    store_alt = alt
-    store_hdg = hdg
-    store_obs = obs
-    encoder_init = true
-  end
+
+
+encoder_table = {
+  [1] = {
+    ["simvalue"] = 29.92,
+    ["dataref"] = "sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot",
+    ["type"] = "FLOAT",
+    ["increment"] = 0.01,
+    ["previous"] = 0
+  },
+  [2] = {
+    ["simvalue"] = 0,
+    ["dataref"] = "sim/cockpit/autopilot/heading",
+    ["type"] = "FLOAT",
+    ["increment"] = 1,
+    ["previous"] = 0
+  },
+  [3] = {
+    ["simvalue"] = 0,
+    ["dataref"] = "sim/cockpit2/radios/actuators/hsi_obs_deg_mag_pilot",
+    ["type"] = "FLOAT",
+    ["increment"] = 1,
+    ["previous"] = 0
+  }
+}
+
+function encoder_update(dataref1, dataref2, dataref3)
+  encoder_table[1].simvalue = dataref1
+  encoder_table[2].simvalue = dataref2
+  encoder_table[3].simvalue = dataref3
 end
 
 hw_id = hw_message_port_add("ARDUINO_LEONARDO_A", incoming_message_callback)
 
-
 xpl_dataref_subscribe(
-  "sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot", "FLOAT",
-  "sim/cockpit/autopilot/heading", "FLOAT",
-  "sim/cockpit2/radios/actuators/hsi_obs_deg_mag_pilot", "FLOAT",
-  encoder_update_callback
+  encoder_table[1].dataref, encoder_table[1].type,
+  encoder_table[2].dataref, encoder_table[2].type,
+  encoder_table[3].dataref, encoder_table[3].type,
+  encoder_update
 )
+
+

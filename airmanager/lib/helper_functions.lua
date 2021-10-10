@@ -26,11 +26,9 @@ end
 function array_compare(array1, array2)
   for i,v in pairs(array1) do
     if v ~= array2[i] then
-      print("array diff")
       return false
     end
   end
-  print("array same")
   return true
 end
 
