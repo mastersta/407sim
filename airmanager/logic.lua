@@ -30,7 +30,7 @@ store_obs = 0
 function incoming_message_callback(id, payload)
 
   if id == 1 then
-
+    
     --iterate over payloads
     for iter_payload, val_payload in ipairs(payload) do
 
@@ -38,8 +38,6 @@ function incoming_message_callback(id, payload)
       for i = 1, 8 do
         local current_value = bitread(payload[iter_payload], i)
         local previous_value = bitread(previous_payload_in[iter_payload], i)
-        if (i == 7) then print(current_value) end
-
         if command_table[iter_payload .. ""][i .. ""]["type"] == "momentary" then
         
           if current_value ~= previous_value then
@@ -56,7 +54,7 @@ function incoming_message_callback(id, payload)
 
         --if input is different than previous
           if current_value ~= previous_value then
-          
+
           --use input value as index, check if "dataref" = nil
             if command_table[iter_payload .. ""][i .. ""][current_value .. ""]["dataref"] ~= nil then
 
@@ -133,11 +131,12 @@ function incoming_message_callback(id, payload)
   end
 
   if id == 3 then
-    output = 1 - math.max(0, math.min(0.9, (payload/1600)))
-    if output <= 0.10 then output = 1 end
-    print("analog: " .. payload .. " -- " .. output)
+    print("analog: " .. payload)
+
+    output = 1 - math.max(0, math.min(1, (payload/1700)))
     xpl_dataref_write(
-      "sim/cockpit/electrical/instrument_brightness",
+      --"sim/cockpit/electrical/instrument_brightness",
+      "B407/Overhead/Swt_Instrument_Brt",
       "FLOAT",
       output,
       0)

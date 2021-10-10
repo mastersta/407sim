@@ -13,6 +13,10 @@
 //payload ids
 #define switch_message_id 1
 #define encoder_message_id 2
+#define analog_message_id 3
+
+//misc
+#define analog_change_margin 64
 
 //interrupt handling
 #define encoder_interrupt_pin 7
@@ -87,7 +91,7 @@ static void new_message_callback(
 
 /*-------------------------------------------------------------
 
-DIGITAL EXPANDER SETUP
+EXPANDER SETUP
 
 -------------------------------------------------------------*/
 digital_expander mcp_panel1         (addr_mcp_panel1);
@@ -95,6 +99,8 @@ digital_expander mcp_panel2         (addr_mcp_panel2);
 digital_expander mcp_overhead1      (addr_mcp_overhead1); //NYI
 //digital_expander mcp_overhead2      (addr_mcp_overhead2); //NYI
 //digital_expander mcp_overhead3      (addr_mcp_overhead3); //NYI
+
+analog_expander  ads_overhead       (addr_ads_overhead);
 
 
 
@@ -158,7 +164,7 @@ void setup() {
 
   //tlc init 
   tlcmanager.init();
-  tlcmanager.broadcast().set_milliamps(20, 1000);
+  //tlcmanager.broadcast().set_milliamps(25, 1000);
   tlcmanager.broadcast().on_pattern(0xAAAA);  //checkerboard pattern
 
   //messageport setup
@@ -174,6 +180,9 @@ void setup() {
   mcp_overhead1.init_as_switches(); //NYI
   //mcp_overhead2.init_as_switches(); //NYI
   //mcp_overhead3.init_as_switches(); //NYI
+
+  //initialize the analog board
+  ads_overhead.init();
 
 };
 
@@ -193,6 +202,9 @@ void loop() {
   mcp_overhead1.read_and_store(); //NYI
   //mcp_overhead2.read_and_store(); //NYI
   //mcp_overhead3.read_and_store(); //NYI
+
+  //read the analog board
+  ads_overhead.read_and_store(0);
 
   if (encoder_flag) { handle_encoders(); };
 
@@ -229,11 +241,29 @@ void loop() {
     };
   };
 
+  if (encoder_flag) { handle_encoders(); };
+
+  //remember the previous analog values
+  static int previous_analog_payload[4] = {};
+
+  //check if the current analog values have changed by more than the margin
+  if (abs(ads_overhead.values[0] - previous_analog_payload[0]) > analog_change_margin) {
+
+    //send the payload if so
+    messagePort->SendMessage(analog_message_id, int32_t(ads_overhead.values[0]));
+
+    //save the new value
+    previous_analog_payload[0] = ads_overhead.values[0];
+
+  };
+
+
   //check for new payload from AM, run the callback function if
   //new payload is ready
   messagePort->Tick();
 
   //debug to let us know the main loop is still running
-  digitalWrite(17, millis()%1000>500);
+  //digitalWrite(17, millis()%1000>500);
+  digitalWrite(17, !bitRead(switch_payload[2], 0));
 
 };

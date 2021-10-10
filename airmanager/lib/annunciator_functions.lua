@@ -25,9 +25,8 @@ end
 
 function array_compare(array1, array2)
   for i,v in pairs(array1) do
---    print(array1[i] .. ":" .. array2[i])
     if v ~= array2[i] then
---      print(false)
+      --print("array diff")
       return false
     end
   end
@@ -39,7 +38,7 @@ function table.clone(input)
   return {table.unpack(input)}
 end
 
-annunciator_payload = {0,0,0,255}
+annunciator_payload = {0,0,0,0}
 
 function annunciator_write(payload, bit, value)
   annunciator_payload[payload] = bitwrite(
@@ -371,12 +370,13 @@ xpl_dataref_subscribe(
 )
 
 function af_overhead_lights(input)
-  output = booltonum(input[1] > 0)
-  if input[1] == 1 then output = 0 end
-  annunciator_write(3, 11, output)
+  output = booltonum(input[3] > 0)
+  for i = 8,13 do
+    annunciator_write(3, i, output)
+  end
 end
 xpl_dataref_subscribe(
-  "sim/cockpit2/electrical/instrument_brightness_ratio_manual","FLOAT[32]", 
+  "sim/cockpit2/switches/instrument_brightness_ratio","FLOAT[32]", 
   af_overhead_lights
 )
 
@@ -388,23 +388,20 @@ brt_swt = 1
 
 function update_annunciator_misc(a,b,c,d,e)   --TODO: Clean up
   test_button = a
-  bus_volts = b[1]
+  bus_volts = b
   instr_brt = c[11]
   dimmer = math.max(d, 0.1)
   brt_swt = e[1]
 end
 
-previous_payload = {0,0,0,255}
-standby_payload = {0,1,0,255}
+previous_payload = {0,0,0,0}
 
 function generate_payload()
   --Set brightness
-  bus_volts_adjusted = math.min(1,math.max((bus_volts - 5) / 23, 0))
-  annunciator_payload[4] = math.floor(bus_volts_adjusted * dimmer * brt_swt * 255)
+  annunciator_payload[4] = math.floor(instr_brt * dimmer * brt_swt * 255)
 
-  
   payload_final = table.clone(annunciator_payload)
-
+  
   --Apply test button
   if test_button == 1 then
     payload_final[1] = 65535
@@ -415,12 +412,7 @@ function generate_payload()
   if not array_compare(payload_final, previous_payload) then
   
     if hw_connected("ARDUINO_LEONARDO_A") then
-      if xpl_connected then
-        hw_message_port_send(hw_id, 0, "INT[4]", payload_final)
-        print("payload out")
-      else
-        hw_message_port_send(hw_id, 0, "INT[4]", standby_payload)
-      end
+      hw_message_port_send(hw_id, 0, "INT[4]", payload_final)
     end
   
     previous_payload = table.clone(payload_final)
