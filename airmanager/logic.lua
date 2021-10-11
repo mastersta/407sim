@@ -21,16 +21,15 @@ function incoming_message_callback(id, payload)
     for payload_index, value in ipairs(payload) do
 
       --check if the new bitfield is the same as the previous one
-      if value != previous_payload_in[payload_index] then
-
+      if value ~= saved_switch_payload[payload_index] then
         --grab each bit and call the appropriate function
-        for bit_index = 1,8 in value do
+        for bit_index = 1,8 do
           switch_value = bitread(value,bit_index)
-          switch_table[payload_index..""][bit_index..""](switch_value)
+          switch_table[payload_index][bit_index](switch_value)
         end
 
       end
-
+    end
     --store the payload value
     for index, value in ipairs(payload) do
       saved_switch_payload[index] = value
@@ -60,10 +59,11 @@ function incoming_message_callback(id, payload)
   if id == 3 then
     print("analog: " .. payload)
 
-    output = 1 - math.max(0, math.min(1, (payload/1700)))
+    output = 1 - math.max(0, math.min(1, (payload/1800)))
+    if output == 0 then output = 1 end
     xpl_dataref_write(
-      --"sim/cockpit/electrical/instrument_brightness",
-      "B407/Overhead/Swt_Instrument_Brt",
+      "sim/cockpit/electrical/instrument_brightness",
+      --"B407/Overhead/Swt_Instrument_Brt",
       "FLOAT",
       output,
       0)
@@ -72,6 +72,7 @@ function incoming_message_callback(id, payload)
 end --function end
 
 
+hw_id = hw_message_port_add("ARDUINO_LEONARDO_A", incoming_message_callback)
 
 
 encoder_table = {
@@ -103,8 +104,6 @@ function encoder_update(dataref1, dataref2, dataref3)
   encoder_table[2].simvalue = dataref2
   encoder_table[3].simvalue = dataref3
 end
-
-hw_id = hw_message_port_add("ARDUINO_LEONARDO_A", incoming_message_callback)
 
 xpl_dataref_subscribe(
   encoder_table[1].dataref, encoder_table[1].type,

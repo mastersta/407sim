@@ -402,7 +402,6 @@ xpl_dataref_subscribe(
 
   --dimmer switch
     "sim/cockpit2/switches/panel_brightness_ratio","FLOAT[4]",
-    
 
   update_annunciator_misc
 )

@@ -3,19 +3,13 @@
 --switch functions named after hardware switch, alternate aircraft will keep these function names and only alter the logic within
 --logic.lua will iterate over the payload, look for changes, and then call the correct function
 
---global vars
-command_delay = 10
 
-
-function command_timer(command)
-  xpl_command(command, 0)
-end
 
 function toggle_command(command0, command1, state)
   command = (state == 0 and command0 or command1) --ternary
 
   xpl_command(command, 1)
-  timer_start(command_delay, command_timer(command))
+  xpl_command(command, 0)
 end
 
 
@@ -196,7 +190,12 @@ function switch_positionlight(state)
 end
 
 
-function switch_2h2unused(state)
+function switch_cautionlightdim(state)
+  output = (state / 2) + 0.5
+  xpl_dataref_write(
+    "sim/cockpit2/switches/panel_brightness_ratio", "FLOAT[4]",
+    output, 0
+  )
 end
 
 
@@ -244,7 +243,7 @@ function switch_2h8unused(state)
 end
 
 
-switch_array = {
+switch_table = {
   [1] = {
     switch_fuelvalve,
     switch_annunciatortest,
@@ -277,7 +276,7 @@ switch_array = {
   },
   [4] = {
     switch_positionlight,
-    switch_2h2unused,
+    switch_cautionlightdim,
     switch_fuelpumpleft,
     switch_fuelpumpright,
     switch_instrumentdg,
