@@ -5,6 +5,7 @@
 
 
 
+
 function toggle_command(command0, command1, state)
   command = (state == 0 and command0 or command1) --ternary
 
