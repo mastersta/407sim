@@ -304,7 +304,7 @@ xpl_dataref_subscribe(
 
 function af_engine_out(input)
   output = booltonum(input[1] < 55)
-  annunciator_write(3, 2, output)
+  annunciator_write(3, 6, output)
 end
 xpl_dataref_subscribe(
   "sim/flightmodel2/engines/N1_percent",         "FLOAT[8]",
@@ -313,7 +313,7 @@ xpl_dataref_subscribe(
 
 function af_pedal_stop(input)
   output = booltonum(input == 0)
-  annunciator_write(3, 3, output)
+  annunciator_write(3, 10, output)
 end
 xpl_dataref_subscribe(
   "B407/PedalStop",                                 "FLOAT",  
@@ -322,7 +322,7 @@ xpl_dataref_subscribe(
 
 function af_rpm(input)
   output = booltonum(input[1] < 392 or input[1] > 442)
-  annunciator_write(3, 4, output)
+  annunciator_write(3, 15, output)
 end
 xpl_dataref_subscribe(
   "sim/cockpit2/engine/indicators/prop_speed_rpm","FLOAT[8]",
@@ -368,7 +368,7 @@ function generate_payload()
   if test_button == 1 then
     payload_final[1] = 65535
     payload_final[2] = 65535
-    payload_final[3] = payload_final[3] | 15
+    payload_final[3] = payload_final[3] | 32767
   end
 
   if not array_compare(payload_final, previous_payload) then
