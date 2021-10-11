@@ -1,44 +1,4 @@
---helper functions
-function numtobool(input)
-  if input == 0 then return false
-  else return true
-  end
-end
-
-function booltonum(input)
-  if input then return 1
-  else return 0
-  end
-end
-
-function bitread(value, bit)
-  return ((value >> (bit - 1)) & 1)
-end
-
-function bitwrite(input, bit, write)
-  if (write > 0) then
-    return input | (1 << (bit - 1))
-  else
-    return input & ~(1 << (bit - 1))
-  end
-end
-
-function array_compare(array1, array2)
-  for i,v in pairs(array1) do
-    if v ~= array2[i] then
-      --print("array diff")
-      return false
-    end
-  end
-  --print("array same")
-  return true
-end
-
-function table.clone(input)
-  return {table.unpack(input)}
-end
-
-annunciator_payload = {0,0,0,0}
+annunciator_payload = {0,0,0,255}
 
 function annunciator_write(payload, bit, value)
   annunciator_payload[payload] = bitwrite(
@@ -370,13 +330,12 @@ xpl_dataref_subscribe(
 )
 
 function af_overhead_lights(input)
-  output = booltonum(input[3] > 0)
-  for i = 8,13 do
-    annunciator_write(3, i, output)
-  end
+  output = booltonum(input[1] > 0)
+  if input[1] == 1 then output = 0 end
+  annunciator_write(3, 11, output)
 end
 xpl_dataref_subscribe(
-  "sim/cockpit2/switches/instrument_brightness_ratio","FLOAT[32]", 
+  "sim/cockpit2/electrical/instrument_brightness_ratio_manual","FLOAT[32]", 
   af_overhead_lights
 )
 
@@ -388,20 +347,23 @@ brt_swt = 1
 
 function update_annunciator_misc(a,b,c,d,e)   --TODO: Clean up
   test_button = a
-  bus_volts = b
+  bus_volts = b[1]
   instr_brt = c[11]
   dimmer = math.max(d, 0.1)
   brt_swt = e[1]
 end
 
-previous_payload = {0,0,0,0}
+previous_payload = {0,0,0,255}
+standby_payload = {0,1,0,255}
 
 function generate_payload()
   --Set brightness
-  annunciator_payload[4] = math.floor(instr_brt * dimmer * brt_swt * 255)
+  bus_volts_adjusted = math.min(1,math.max((bus_volts - 5) / 23, 0))
+  annunciator_payload[4] = math.floor(bus_volts_adjusted * dimmer * brt_swt * 255)
 
-  payload_final = table.clone(annunciator_payload)
   
+  payload_final = table.clone(annunciator_payload)
+
   --Apply test button
   if test_button == 1 then
     payload_final[1] = 65535
@@ -412,7 +374,12 @@ function generate_payload()
   if not array_compare(payload_final, previous_payload) then
   
     if hw_connected("ARDUINO_LEONARDO_A") then
-      hw_message_port_send(hw_id, 0, "INT[4]", payload_final)
+      if xpl_connected then
+        hw_message_port_send(hw_id, 0, "INT[4]", payload_final)
+        print("payload out")
+      else
+        hw_message_port_send(hw_id, 0, "INT[4]", standby_payload)
+      end
     end
   
     previous_payload = table.clone(payload_final)
@@ -435,7 +402,6 @@ xpl_dataref_subscribe(
 
   --dimmer switch
     "sim/cockpit2/switches/panel_brightness_ratio","FLOAT[4]",
-    
 
   update_annunciator_misc
 )
