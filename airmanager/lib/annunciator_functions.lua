@@ -136,7 +136,7 @@ xpl_dataref_subscribe(
   af_fuel_valve
 )
 
-function af_restart_fault(input)
+function af_fadec_fault(input)
   output = 0
   annunciator_write(1, 16, output)
 end
@@ -169,10 +169,13 @@ xpl_dataref_subscribe(
 )
 
 function af_fadec_degraded(input)
-  output = 0
+  output = booltonum(input > 0.05)
   annunciator_write(2, 4, output)
 end
---NYI
+xpl_dataref_subscribe(
+  "sim/time/framerate_period",                      "FLOAT",
+  af_fadec_degraded
+)
 
 function af_manual_fadec(input)
   output = booltonum(input == 0)
@@ -293,7 +296,7 @@ function af_cyclic_centering(input1, input2, input3)
     (input3 == 1) and
     (math.abs(input1) > 0.042 or math.abs(input2) > 0.068)
   )
-  annunciator_write(3, 1, output)
+  annunciator_write(2, 16, output)  --3.1
 end
 xpl_dataref_subscribe(
   "B407/Controls/Pitch",                            "FLOAT",
@@ -304,7 +307,7 @@ xpl_dataref_subscribe(
 
 function af_engine_out(input)
   output = booltonum(input[1] < 55)
-  annunciator_write(3, 6, output)
+  annunciator_write(2, 15, output)  --3.2
 end
 xpl_dataref_subscribe(
   "sim/flightmodel2/engines/N1_percent",         "FLOAT[8]",
@@ -313,7 +316,7 @@ xpl_dataref_subscribe(
 
 function af_pedal_stop(input)
   output = booltonum(input == 0)
-  annunciator_write(3, 10, output)
+  annunciator_write(2, 7, output)  --3.3
 end
 xpl_dataref_subscribe(
   "B407/PedalStop",                                 "FLOAT",  
@@ -322,7 +325,7 @@ xpl_dataref_subscribe(
 
 function af_rpm(input)
   output = booltonum(input[1] < 392 or input[1] > 442)
-  annunciator_write(3, 15, output)
+  annunciator_write(2, 4, output)  --3.4
 end
 xpl_dataref_subscribe(
   "sim/cockpit2/engine/indicators/prop_speed_rpm","FLOAT[8]",
@@ -332,7 +335,7 @@ xpl_dataref_subscribe(
 function af_overhead_lights(input)
   output = booltonum(input[1] > 0)
   if input[1] == 1 then output = 0 end
-  annunciator_write(3, 11, output)
+  annunciator_write(2, 1, output)  --3.5
 end
 xpl_dataref_subscribe(
   "sim/cockpit2/electrical/instrument_brightness_ratio_manual","FLOAT[32]", 
@@ -354,7 +357,7 @@ function update_annunciator_misc(a,b,c,d,e)   --TODO: Clean up
 end
 
 previous_payload = {0,0,0,255}
-standby_payload = {0,1,0,255}
+standby_payload = {1,0,1,255}
 
 function generate_payload()
   --Set brightness
@@ -367,9 +370,10 @@ function generate_payload()
   --Apply test button
   if test_button == 1 then
     payload_final[1] = 65535
-    payload_final[2] = 65535
-    payload_final[3] = payload_final[3] | 32767
+    payload_final[2] = payload_final[2] | 65534
+    payload_final[3] = payload_final[1]
   end
+  payload_final[3] = payload_final[1]  --temporary until replacement board comes in
 
   if not array_compare(payload_final, previous_payload) then
   
