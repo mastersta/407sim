@@ -378,18 +378,28 @@ function generate_payload()
   if not array_compare(payload_final, previous_payload) then
   
     if hw_connected("ARDUINO_LEONARDO_A") then
-      if xpl_connected then
-        hw_message_port_send(hw_id, 0, "INT[4]", payload_final)
-        print("payload out")
-      else
-        hw_message_port_send(hw_id, 0, "INT[4]", standby_payload)
-      end
+      hw_message_port_send(hw_id, 0, "INT[4]", payload_final)
+      print("payload out")
     end
   
     previous_payload = table.clone(payload_final)
   end
 
 end
+
+function check_xpl_connection()
+  if not xpl_connected() then
+    if hw_connected("ARDUINO_LEONARDO_A") then
+      hw_message_port_send(hw_id, 0, "INT[4]", standby_payload)
+      print("hardware connected, waiting for sim")
+    else print("waiting on hardware")
+    end
+  else hw_message_port_send(hw_id, 0, "INT[4]", payload_final)
+    print("heartbeat")
+  end
+end
+
+connection_timer = timer_start(0, 1000, check_xpl_connection)
 
 xpl_dataref_subscribe(
   --annunciator test
