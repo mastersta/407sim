@@ -25,7 +25,10 @@ function incoming_message_callback(id, payload)
         --grab each bit and call the appropriate function
         for bit_index = 1,8 do
           switch_value = bitread(value,bit_index)
-          switch_table[payload_index][bit_index](switch_value)
+          previous_switch_value = bitread(saved_switch_payload[payload_index],bit_index)
+          if switch_value ~= previous_switch_value then
+            switch_table[payload_index][bit_index](switch_value)
+          end
         end
 
       end
