@@ -170,7 +170,7 @@ xpl_dataref_subscribe(
 
 function af_fadec_degraded(input)
   output = booltonum(input > 0.05)
-  annunciator_write(2, 4, output)
+  --annunciator_write(2, 4, output)
 end
 xpl_dataref_subscribe(
   "sim/time/framerate_period",                      "FLOAT",
@@ -372,8 +372,10 @@ function generate_payload()
     payload_final[1] = 65535
     payload_final[2] = payload_final[2] | 65534
     payload_final[3] = payload_final[1]
+    payload_final[4] = 255
   end
   payload_final[3] = payload_final[1]  --temporary until replacement board comes in
+
 
   if not array_compare(payload_final, previous_payload) then
   
@@ -394,8 +396,12 @@ function check_xpl_connection()
       print("hardware connected, waiting for sim")
     else print("waiting on hardware")
     end
-  else hw_message_port_send(hw_id, 0, "INT[4]", payload_final)
-    print("heartbeat")
+  else
+    if hw_connected("ARDUINO_LEONARDO_A") then
+      hw_message_port_send(hw_id, 0, "INT[4]", payload_final)
+      print("heartbeat")
+    else print("sim connected, waiting on hardware")
+    end
   end
 end
 
@@ -419,3 +425,24 @@ xpl_dataref_subscribe(
 
   update_annunciator_misc
 )
+
+ENGOUT_horn = sound_add("b407ENGOUThorn.wav", 1)
+NR_horn = sound_add("b407NRhorn.wav", 1)
+function update_horns(engout_horn, hinr_horn, lonr_horn)
+  if engout_horn == 1 then
+    sound_loop(ENGOUT_horn)
+  else
+    sound_stop(ENGOUT_horn)
+  end
+
+  if (hinr_horn == 1) or (lonr_horn == 1) then
+    sound_loop(NR_horn)
+  else
+    sound_stop(NR_horn)
+  end
+end
+xpl_dataref_subscribe(
+  "B407/EngOut_Horn",  "FLOAT",
+  "B407/HiNR_Horn",  "FLOAT",
+  "B407/LoNR_Horn",  "FLOAT",
+  update_horns)
