@@ -26,9 +26,10 @@ void encoder_interrupt() {
 };
 
 //setup tlcs
-TLC59116 tlc_array[2] = {
+TLC59116 tlc_array[3] = {
   TLC59116(0),
-  TLC59116(1)
+  TLC59116(1),
+  TLC59116(2)
 };
 
 //init messageport
@@ -67,7 +68,7 @@ static void new_message_callback(
     volts_pwm = payload->data_int[3];
     
     //iterate over each int32 in the payload
-    for (byte i = 0; i < 2; i++) {
+    for (byte i = 0; i < 3; i++) {
       
       //drop into annunciator data (uint16 casted automatically)
       annunciator_data[i] = payload->data_int[i];
@@ -160,10 +161,17 @@ void setup() {
                   FALLING);
 
   //tlc init 
-  for(byte i = 0; i < 2; i++) {
+  for(byte i = 0; i < 3; i++) {
     tlc_array[i].begin();
-    for(byte j = 0; j < 16; j = j + 2) {
+    for(byte j = 0; j < 16; j++) {
       tlc_array[i].analogWrite(j, 255);
+      delay(50);
+    }
+  };
+  delay(1000);
+  for(byte i = 0; i < 3; i++) {
+    for(byte j = 0; j < 16; j++) {
+      tlc_array[i].analogWrite(j, 0);
     }
   };
 
@@ -257,6 +265,8 @@ void loop() {
     previous_analog_payload[0] = ads_overhead.values[0];
 
   };
+
+  
 
 
   //check for new payload from AM, run the callback function if
