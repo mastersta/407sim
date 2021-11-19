@@ -1,5 +1,3 @@
-#include <Wire.h>
-#include <TLC59116_Unmanaged.h>
 #include <TLC59116.h>
 #include <si_message_port.hpp>
 
@@ -25,11 +23,14 @@ volatile bool encoder_flag = false;
 //ISR for encoder interrupt
 void encoder_interrupt() {
   encoder_flag = true;
-}
+};
 
-//setup tlcmanager
-#define i2c_speed 100000
-TLC59116Manager tlcmanager(Wire, i2c_speed);
+//setup tlcs
+TLC59116 tlc_array[3] = {
+  TLC59116(0),
+  TLC59116(1),
+  TLC59116(2)
+};
 
 //init messageport
 SiMessagePort* messagePort;
@@ -74,11 +75,8 @@ static void new_message_callback(
 
       //iterate over each bit, apply current bus voltage pwm value
       for (byte j = 0; j < 16; j++) {
-        annunciator_pwm[i][j] = (bitRead(annunciator_data[i], j) * volts_pwm);
+        tlc_array[i].analogWrite(j,(bitRead(annunciator_data[i], j) * volts_pwm));
       };
-
-      //set the outputs according to the pwm data
-      tlcmanager[i].set_outputs(annunciator_pwm[i]);
       
     };
 
@@ -163,9 +161,20 @@ void setup() {
                   FALLING);
 
   //tlc init 
-  tlcmanager.init();
-  //tlcmanager.broadcast().set_milliamps(25, 1000);
-  tlcmanager.broadcast().on_pattern(0xAAAA);  //checkerboard pattern
+  for(byte i = 0; i < 3; i++) {
+    tlc_array[i].begin();
+    for(byte j = 0; j < 16; j++) {
+      tlc_array[i].analogWrite(j, 255);
+      delay(50);
+    }
+  };
+  delay(1000);
+  for(byte i = 0; i < 3; i++) {
+    for(byte j = 0; j < 16; j++) {
+      tlc_array[i].analogWrite(j, 0);
+    }
+  };
+
 
   //messageport setup
   messagePort = new SiMessagePort(
@@ -256,6 +265,8 @@ void loop() {
     previous_analog_payload[0] = ads_overhead.values[0];
 
   };
+
+  
 
 
   //check for new payload from AM, run the callback function if

@@ -2,8 +2,6 @@
 #define LIB407_IO_H
 
 #include <Wire.h>
-#include <TLC59116_Unmanaged.h>
-#include <TLC59116.h>
 #include <Adafruit_ADS1015.h>
 #include <Adafruit_MCP23017.h>
 #include <Arduino.h>
