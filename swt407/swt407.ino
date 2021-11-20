@@ -14,7 +14,7 @@
 #define analog_message_id 3
 
 //misc
-#define analog_change_margin 64
+#define analog_change_margin 128
 
 //interrupt handling
 #define encoder_interrupt_pin 7
@@ -160,7 +160,7 @@ void setup() {
                   encoder_interrupt,
                   FALLING);
 
-  //tlc init 
+  //tlc init, progressively light all lights 
   for(byte i = 0; i < 3; i++) {
     tlc_array[i].begin();
     for(byte j = 0; j < 16; j++) {
@@ -168,13 +168,6 @@ void setup() {
       delay(50);
     }
   };
-  delay(1000);
-  for(byte i = 0; i < 3; i++) {
-    for(byte j = 0; j < 16; j++) {
-      tlc_array[i].analogWrite(j, 0);
-    }
-  };
-
 
   //messageport setup
   messagePort = new SiMessagePort(
@@ -192,6 +185,14 @@ void setup() {
 
   //initialize the analog board
   ads_overhead.init();
+
+  //unlight all lights to signify setup success
+  delay(1000);
+  for(byte i = 0; i < 3; i++) {
+    for(byte j = 0; j < 16; j++) {
+      tlc_array[i].analogWrite(j, 0);
+    }
+  };
 
 };
 
@@ -218,7 +219,7 @@ void loop() {
   if (encoder_flag) { handle_encoders(); };
 
   //switch payload handling
-  const byte sp_len = 8;  //TODO: ensure to update len
+  const byte sp_len = 4;  //TODO: ensure to update len
   static uint8_t previous_switch_payload[sp_len] = {};
   uint8_t switch_payload[sp_len] = {};
 

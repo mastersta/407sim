@@ -20,7 +20,7 @@
 #define addr_mcp_panel3     4 //0x24
 #define addr_mcp_overhead1  5 //0x25
 #define addr_mcp_overhead2  6 //0x26
-#define addr_mcp_overhead2  7 //0x27
+#define addr_mcp_overhead3  7 //0x27
 
 
 /*-------------------------------------------------------------
