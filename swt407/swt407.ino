@@ -1,6 +1,6 @@
 #include <TLC59116.h>
 #include <si_message_port.hpp>
-
+#include <avr/wdt.h>
 #include "lib407_io.h"
 
 //tlc addresses
@@ -156,6 +156,7 @@ void setup() {
   pinMode(17, OUTPUT);
   digitalWrite(17, LOW);
 
+  pinMode(encoder_interrupt_pin, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(encoder_interrupt_pin),
                   encoder_interrupt,
                   FALLING);
@@ -163,6 +164,7 @@ void setup() {
   //tlc init, progressively light all lights 
   for(byte i = 0; i < 3; i++) {
     tlc_array[i].begin();
+
     for(byte j = 0; j < 16; j++) {
       tlc_array[i].analogWrite(j, 255);
       delay(50);
@@ -180,8 +182,8 @@ void setup() {
   mcp_panel1.init_as_switches();
   mcp_panel2.init_as_encoders();
   mcp_overhead1.init_as_switches();
-  mcp_overhead2.init_as_switches();
-  mcp_overhead3.init_as_switches();
+//  mcp_overhead2.init_as_switches();
+//  mcp_overhead3.init_as_switches();
 
   //initialize the analog board
   ads_overhead.init();
@@ -193,6 +195,8 @@ void setup() {
       tlc_array[i].analogWrite(j, 0);
     }
   };
+
+  wdt_enable(WDTO_1S);
 
 };
 
@@ -210,8 +214,8 @@ void loop() {
   mcp_panel1.read_and_store();
   //mcp_panel2.read_and_store();    //encoders, don't read
   mcp_overhead1.read_and_store();
-  mcp_overhead2.read_and_store();
-  mcp_overhead3.read_and_store();
+//  mcp_overhead2.read_and_store();
+//  mcp_overhead3.read_and_store();
 
   //read the analog board
   ads_overhead.read_and_store(0);
@@ -228,10 +232,10 @@ void loop() {
   switch_payload[1] = (mcp_panel1.values >> 8); //high half
   switch_payload[2] =  mcp_overhead1.values;  //low half (top cut off)
   switch_payload[3] = (mcp_overhead1.values >> 8); //high half
-  switch_payload[4] =  mcp_overhead2.values;  //low half (top cut off)
-  switch_payload[5] = (mcp_overhead2.values >> 8); //high half
-  switch_payload[6] =  mcp_overhead3.values;  //low half (top cut off)
-  switch_payload[7] = (mcp_overhead3.values >> 8); //high half
+//  switch_payload[4] =  mcp_overhead2.values;  //low half (top cut off)
+//  switch_payload[5] = (mcp_overhead2.values >> 8); //high half
+//  switch_payload[6] =  mcp_overhead3.values;  //low half (top cut off)
+//  switch_payload[7] = (mcp_overhead3.values >> 8); //high half
   
   //check if the payload has changed
   bool payload_changed = false;
@@ -275,7 +279,9 @@ void loop() {
   messagePort->Tick();
 
   //debug to let us know the main loop is still running
-  //digitalWrite(17, millis()%1000>500);
-  digitalWrite(17, !bitRead(switch_payload[2], 0));
+  //int on_off = (millis()%1000>500);
+  //digitalWrite(17, on_off);
+
+  wdt_reset();
 
 };
