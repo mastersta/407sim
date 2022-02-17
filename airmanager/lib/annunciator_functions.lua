@@ -73,11 +73,14 @@ xpl_dataref_subscribe(
   af_baggage_door
 )
 
-function af_litter_door()
-  output = 0
+function af_litter_door(input)
+  output = booltonum(input > 0.01)
   annunciator_write(1, 8, output)
 end
---NYI
+xpl_dataref_subscribe(
+  "B407/Door_4",                                   "FLOAT",
+  af_litter_door
+)
 
 function af_heater_overtemp()
   output = 0
@@ -88,6 +91,7 @@ end
 function af_lfuel_boost(input)
   output = booltonum(input[1] == 0)
   annunciator_write(1, 10, output)
+  annunciator_write(1, 11, output)
 end
 xpl_dataref_subscribe(
   "sim/cockpit2/fuel/fuel_tank_pump_on",            "INT[8]",  
@@ -95,13 +99,7 @@ xpl_dataref_subscribe(
 )
 
 function af_lfuel_xfer(input)
-  output = booltonum(input == 0)
-  annunciator_write(1, 11, output)
 end
-xpl_dataref_subscribe(
-  "B407/Overhead/Swt_BoostXFR_Left",                "FLOAT",  
-  af_lfuel_xfer
-)
 
 function af_fuel_filter(input)
   output = 0
@@ -112,6 +110,7 @@ end
 function af_rfuel_boost(input)
   output = booltonum(input[2] == 0)
   annunciator_write(1, 13, output)
+  annunciator_write(1, 14, output)
 end
 xpl_dataref_subscribe(
   "sim/cockpit2/fuel/fuel_tank_pump_on",            "INT[8]",  
@@ -119,13 +118,7 @@ xpl_dataref_subscribe(
 )
 
 function af_rfuel_xfer(input)
-  output = booltonum(input == 0)
-  annunciator_write(1, 14, output)
 end
-xpl_dataref_subscribe(
-  "B407/Overhead/Swt_BoostXFR_Right",               "FLOAT",  
-  af_rfuel_xfer
-)
 
 function af_fuel_valve(input)
   output = input
@@ -170,7 +163,7 @@ xpl_dataref_subscribe(
 
 function af_fadec_degraded(input)
   output = booltonum(input > 0.05)
-  --annunciator_write(2, 4, output)
+  annunciator_write(2, 4, output)
 end
 xpl_dataref_subscribe(
   "sim/time/framerate_period",                      "FLOAT",
@@ -296,7 +289,7 @@ function af_cyclic_centering(input1, input2, input3)
     (input3 == 1) and
     (math.abs(input1) > 0.042 or math.abs(input2) > 0.068)
   )
-  annunciator_write(2, 16, output)  --3.1
+  annunciator_write(3, 1, output)
 end
 xpl_dataref_subscribe(
   "B407/Controls/Pitch",                            "FLOAT",
@@ -307,7 +300,7 @@ xpl_dataref_subscribe(
 
 function af_engine_out(input)
   output = booltonum(input[1] < 55)
-  annunciator_write(2, 15, output)  --3.2
+  annunciator_write(3, 2, output)
 end
 xpl_dataref_subscribe(
   "sim/flightmodel2/engines/N1_percent",         "FLOAT[8]",
@@ -316,7 +309,7 @@ xpl_dataref_subscribe(
 
 function af_pedal_stop(input)
   output = booltonum(input == 0)
-  annunciator_write(2, 7, output)  --3.3
+  annunciator_write(3, 3, output)
 end
 xpl_dataref_subscribe(
   "B407/PedalStop",                                 "FLOAT",  
@@ -325,7 +318,7 @@ xpl_dataref_subscribe(
 
 function af_rpm(input)
   output = booltonum(input[1] < 392 or input[1] > 442)
-  annunciator_write(2, 4, output)  --3.4
+  annunciator_write(3, 4, output)
 end
 xpl_dataref_subscribe(
   "sim/cockpit2/engine/indicators/prop_speed_rpm","FLOAT[8]",
@@ -335,7 +328,7 @@ xpl_dataref_subscribe(
 function af_overhead_lights(input)
   output = booltonum(input[1] > 0)
   if input[1] == 1 then output = 0 end
-  annunciator_write(2, 1, output)  --3.5
+  annunciator_write(3, 6, output)
 end
 xpl_dataref_subscribe(
   "sim/cockpit2/electrical/instrument_brightness_ratio_manual","FLOAT[32]", 
@@ -357,25 +350,24 @@ function update_annunciator_misc(a,b,c,d,e)   --TODO: Clean up
 end
 
 previous_payload = {0,0,0,255}
-standby_payload = {1,0,1,255}
+standby_payload = {1,0,32,255}
 
 function generate_payload()
   --Set brightness
   bus_volts_adjusted = math.min(1,math.max((bus_volts - 5) / 23, 0))
   annunciator_payload[4] = math.floor(bus_volts_adjusted * dimmer * brt_swt * 255)
+  --if annunciator_payload[4] > 0 then annunciator_payload[4] = 255 end
 
-  
   payload_final = table.clone(annunciator_payload)
 
   --Apply test button
   if test_button == 1 then
-    payload_final[1] = 65535
-    payload_final[2] = payload_final[2] | 65534
-    payload_final[3] = payload_final[1]
-    payload_final[4] = 255
+    payload_final[1] = payload_final[1] | 65535
+    payload_final[2] = payload_final[2] | 65535
+    payload_final[3] = payload_final[3] | 15
+    --payload_final[4] = 255
   end
-  payload_final[3] = payload_final[1]  --temporary until replacement board comes in
-
+ 
 
   if not array_compare(payload_final, previous_payload) then
   
@@ -389,19 +381,34 @@ function generate_payload()
 
 end
 
+annun_reset = true
 function check_xpl_connection()
+
   if not xpl_connected() then
+
     if hw_connected("ARDUINO_LEONARDO_A") then
       hw_message_port_send(hw_id, 0, "INT[4]", standby_payload)
       print("hardware connected, waiting for sim")
-    else print("waiting on hardware")
-    end
+
+    else print("waiting on hardware") end
+  
   else
+
     if hw_connected("ARDUINO_LEONARDO_A") then
+
+      if annun_reset then
+        annun_reset = false
+        xpl_command("sim/annunciator/test_all_annunciators", 0)
+      end
+
       hw_message_port_send(hw_id, 0, "INT[4]", payload_final)
       print("heartbeat")
-    else print("sim connected, waiting on hardware")
+
+    else
+      print("sim connected, waiting on hardware")
+      annun_reset = true
     end
+
   end
 end
 

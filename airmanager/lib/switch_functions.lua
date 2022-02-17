@@ -3,7 +3,36 @@
 --switch functions named after hardware switch, alternate aircraft will keep these function names and only alter the logic within
 --logic.lua will iterate over the payload, look for changes, and then call the correct function
 
+function update_switches(payload)
+  --print("switch payload in: ", payload)
 
+  --iterate over the payload array
+  for payload_index, value in ipairs(payload) do
+
+    --check if the new bitfield is the same as the previous one
+    if value ~= saved_switch_payload[payload_index] then
+
+      --grab each bit and call the appropriate function
+      for bit_index = 1,8 do
+
+        switch_value = bitread(value,bit_index)
+        previous_switch_value = bitread(saved_switch_payload[payload_index],bit_index)
+
+        if switch_value ~= previous_switch_value then
+          switch_table[payload_index][bit_index](switch_value)
+          print("board #" .. payload_index .. " switch #" .. bit_index)
+        end --if
+
+      end --for
+    end --if
+  end --for
+
+    --store the payload value
+  for index, value in ipairs(payload) do
+    saved_switch_payload[index] = value
+  end --for
+
+end --function
 
 function toggle_command(command0, command1, state)
   command = (state == 0 and command0 or command1) --ternary
@@ -76,49 +105,84 @@ end
 
 --payload 1, panel1 high
 function switch_cdi(state)
-  command = "sim/GPS/g430n1_cdi"
-
-  xpl_command(command, 1 - state)
+--  command = "sim/GPS/g430n1_cdi"
+  print("cdiselect")
+--  xpl_command(command, 1 - state)
 end
 
 
 function switch_fadec(state)
-  command = "B407/systems/toggle/Fadec"
-
-  xpl_command(command, 1 - state)
+--  command = "B407/systems/toggle/Fadec"
+  print("fadectoggle")
+--  xpl_command(command, 1 - state)
 end
 
 
 function switch_pedalstop(state)
+  print("pedalstop")
 end
 
 
 function switch_oatvselect(state)
   command = "B407/Clock/efc_select"
-
+  print("oatv select")
   xpl_command(command, 1 - state)
 end
 
 
 function switch_clockselect(state)
   command = "B407/Clock/select"
-
+  print("clock select")
   xpl_command(command, 1 - state)
 end
 
 
 function switch_clockcontrol(state)
   command = "B407/Clock/control"
-
+  print("clock control")
   xpl_command(command, 1 - state)
 end
 
 
-function switch_1h7unused(state)
+function switch_gps1home(state)
+  command = "RXP/GTN/HOME_1"
+  print("gps 1 home")
+  xpl_command(command, 1 - state)
 end
 
 
-function switch_1h8unused(state)
+function switch_gps1dto(state)
+  command = "RXP/GTN/DTO_1"
+  print("gps 1 direct-to")
+  xpl_command(command, 1 - state)
+end
+
+
+function switch_gps1encpb(state)
+  command = "RXP/GTN/FMS_PUSH_1"
+  print("gps 1 encoder pb")
+  xpl_command(command, 1 - state)
+end
+
+
+function switch_gps2home(state)
+  command = "RXP/GTN/HOME_2"
+  print("gps 2 home")
+  xpl_command(command, 1 - state)
+end
+
+
+function switch_gps2dto(state)
+  command = "RXP/GTN/DTO_2"
+  print("gps 2 direct-to")
+  xpl_command(command, 1 - state)
+end
+
+
+function switch_gps2encpb(state)
+  command = "RXP/GTN/FMS_PUSH_2"
+  print("gps 2 encoder pb")
+  xpl_command(command, 1 - state)
 end
 
 
@@ -246,239 +310,176 @@ end
 
 
 function switch_2h8unused(state)
+  print("unused input")
 end
 
 
 function cb_fuelvalve(state)
+  dataref = "B407/CircuitBreaker/FUEL_VALVE"
+  print("cb fuel valve")
+  output = state
   xpl_dataref_write(
-    "B407/CircuitBreaker/FUEL_VALVE",
-    state, 0
+    dataref, "FLOAT",
+    output, 0
   )
 end
+
 
 function cb_fuelqty(state)
+  dataref = "B407/CircuitBreaker/FUEL_QTY"
+  print("cb fuel qty")
+  output = state
   xpl_dataref_write(
-    "B407/CircuitBreaker/FUEL_QTY",
-    state, 0
+    dataref, "FLOAT",
+    output, 0
   )
 end
 
-function cb_fuelpressure(state)
+
+function cb_fuelpress(state)
+  dataref = "B407/CircuitBreaker/FUEL_PRESS"
+  print("cb fuel press")
+  output = state
   xpl_dataref_write(
-    "B407/CircuitBreaker/FUEL_PRESS",
-    state, 0
+    dataref, "FLOAT",
+    output, 0
   )
 end
+
 
 function cb_genreset(state)
+  dataref = "B407/CircuitBreaker/GEN_RESET"
+  print("cb gen reset")
+  output = state
   xpl_dataref_write(
-    "B407/CircuitBreaker/GEN_RESET",
-    state, 0
+    dataref, "FLOAT",
+    output, 0
   )
 end
+
 
 function cb_genfield(state)
+  dataref = "B407/CircuitBreaker/GEN_FIELD"
+  print("cb gen field")
+  output = state
   xpl_dataref_write(
-    "B407/CircuitBreaker/GEN_FIELD",
-    state, 0
+    dataref, "FLOAT",
+    output, 0
   )
 end
 
-function cb_xmsntemp(state)
+
+function cb_xmsnoiltemp(state)
+  dataref = "B407/CircuitBreaker/XMSN_TEMP"
+  print("cb xmsn oil temp")
+  output = state
   xpl_dataref_write(
-    "B407/CircuitBreaker/XMSN_TEMP",
-    state, 0
+    dataref, "FLOAT",
+    output, 0
   )
 end
 
-function cb_xmsnpress(state)
+
+function cb_xmsnoilpress(state)
+  dataref = "B407/CircuitBreaker/XMSN_PRESS"
+  print("cb xmsn oil press")
+  output = state
   xpl_dataref_write(
-    "B407/CircuitBreaker/XMSN_PRESS",
-    state, 0
+    dataref, "FLOAT",
+    output, 0
   )
 end
 
-function cb_engmgt(state)
+
+function cb_mgt(state)
+  dataref = "B407/CircuitBreaker/ENG_MGT"
+  print("cb mgt")
+  output = state
   xpl_dataref_write(
-    "B407/CircuitBreaker/ENG_MGT",
-    state, 0
+    dataref, "FLOAT",
+    output, 0
   )
 end
 
-function cb_engtrq(state)
+
+function cb_trq(state)
+  dataref = "B407/CircuitBreaker/ENG_TRQ"
+  print("cb trq")
+  output = state
   xpl_dataref_write(
-    "B407/CircuitBreaker/ENG_TRQ",
-    state, 0
+    dataref, "FLOAT",
+    output, 0
   )
 end
 
-function cb_engng(state)
+
+function cb_ng(state)
+  dataref = "B407/CircuitBreaker/ENG_NG"
+  print("cb ng")
+  output = state
   xpl_dataref_write(
-    "B407/CircuitBreaker/ENG_NG",
-    state, 0
+    dataref, "FLOAT",
+    output, 0
   )
 end
 
-function cb_engnp(state)
+
+function cb_np(state)
+  dataref = "B407/CircuitBreaker/ENG_NP"
+  print("cb np")
+  output = state
   xpl_dataref_write(
-    "B407/CircuitBreaker/ENG_NP",
-    state, 0
+    dataref, "FLOAT",
+    output, 0
   )
 end
 
-function cb_engnr(state)
+
+function cb_nr(state)
+  dataref = "B407/CircuitBreaker/ENG_NR"
+  print("cb nr")
+  output = state
   xpl_dataref_write(
-    "B407/CircuitBreaker/ENG_NR",
-    state, 0
+    dataref, "FLOAT",
+    output, 0
   )
 end
+
 
 function cb_engoiltemp(state)
+  dataref = "B407/CircuitBreaker/ENG_TEMP"
+  print("cb eng oil temp")
+  output = state
   xpl_dataref_write(
-    "B407/CircuitBreaker/ENG_TEMP",
-    state, 0
+    dataref, "FLOAT",
+    output, 0
   )
 end
+
 
 function cb_engoilpress(state)
+  dataref = "B407/CircuitBreaker/ENG_PRESS"
+  print("cb eng oil press")
+  output = state
   xpl_dataref_write(
-    "B407/CircuitBreaker/ENG_PRESS",
-    state, 0
-  )
-end
-
-function cb_engantiice(state)
-  xpl_dataref_write(
-    "B407/CircuitBreaker/ANTI_ICE",
-    state, 0
-  )
-end
-
-function cb_starter(state)
-  xpl_dataref_write(
-    "B407/CircuitBreaker/START",
-    state, 0
-  )
-end
-
-function cb_igniter(state)
-  xpl_dataref_write(
-    "B407/CircuitBreaker/IGNITER",
-    state, 0
-  )
-end
-
-function cb_fadec(state)
-  output = (1 - state) * 6
-  xpl_dataref_write(
-    "sim/operation/failures/rel_fadec_0"
+    dataref, "FLOAT",
     output, 0
   )
 end
-
-function cb_hydsys(state)
-  xpl_dataref_write(
-    "B407/CircuitBreaker/HYD_SYS",
-    state, 0
-  )
-end
-
-function cb_pedalstop(state)
-  xpl_dataref_write(
-    "B407/CircuitBreaker/PEDAL_STOP",
-    state, 0
-  )
-end
-
-function cb_ldglights(state)
-  xpl_dataref_write(
-    "B407/CircuitBreaker/LIGHT_PWR",
-    state, 0
-  )
-end
-
-function cb_ldglightscont(state)
-  xpl_dataref_write(
-    "B407/CircuitBreaker/LIGHT_CONT",
-    state, 0
-  )
-end
-
-function cb_cautionlights(state)
-  xpl_dataref_write(
-    "B407/CircuitBreaker/LIGHT_CAUT",
-    state, 0
-  )
-end
-
-function cb_oatv(state)
-  xpl_dataref_write(
-    "B407/CircuitBreaker/OAT_V",
-    state, 0
-  )
-end
-
-function cb_amps(state)
-  xpl_dataref_write(
-    "B407/CircuitBreaker/AMPS",
-    state, 0
-  )
-end
-
-function cb_navcom1(state)
-  output = (1 - state) * 6
-  xpl_dataref_write(
-    "sim/operation/failures/rel_navcom1",
-    output, 0
-  )
-end
-
-function cb_com2(state)
-  output = (1 - state) * 6
-  xpl_dataref_write(
-    "sim/operation/failures/rel_navcom2",
-    output, 0
-  )
-end
-
-function cb_xpndr(state)
-  output = (1 - state) * 6
-  xpl_dataref_write(
-    "sim/operation/failures/rel_xpndr",
-    output, 0
-  )
-end
-
-function cb_gps1(state)
-  output = (1 - state) * 6
-  xpl_dataref_write(
-    "sim/operation/failures/rel_gps",
-    output, 0
-  )
-end
-
-function cb_gps2(state)
-  output = (1 - state) * 6
-  xpl_dataref_write(
-    "sim/operation/failures/rel_gps2",
-    output, 0
-  )
-end
-
-function cb_radalt(state)
-  xpl_dataref_write(
-    "B407/CircuitBreaker/RADAR_ALT",
-    state, 0
-  )
-end
-
-function cb_4h8unused(state)
-end
-
 
 
 switch_table = {
   [1] = {
+    switch_clockselect,
+    switch_clockcontrol,
+    switch_gps1home,
+    switch_gps1dto,
+    switch_gps1encpb,
+    switch_gps2home,
+    switch_gps2dto,
+    switch_gps2encpb
+  },
+  [2] = {
     switch_fuelvalve,
     switch_annunciatortest,
     switch_hornmute,
@@ -486,17 +487,7 @@ switch_table = {
     switch_lcdtest,
     switch_fuelquantity,
     switch_fadechorntest,
-    switch_overspeedtest
-  },
-  [2] = {
-    switch_cdi,
-    switch_fadec,
-    switch_pedalstop,
     switch_oatvselect,
-    switch_clockselect,
-    switch_clockcontrol,
-    switch_1h7unused,
-    switch_1h8unused
   },
   [3] = {
     switch_battery,
@@ -521,41 +512,53 @@ switch_table = {
   [5] = {
     cb_fuelvalve,
     cb_fuelqty,
-    cb_fuelpressure,
+    cb_fuelpress,
     cb_genreset,
     cb_genfield,
-    cb_xmsntemp,
-    cb_xmsnpress,
-    cb_engmgt
+    cb_xmsnoiltemp,
+    cb_xmsnoilpress,
+    cb_mgt
   },
   [6] = {
-    cb_engtrq,
-    cb_engng,
-    cb_engnp,
-    cb_engnr,
+    cb_trq,
+    cb_ng,
+    cb_np,
+    cb_nr,
     cb_engoiltemp,
     cb_engoilpress,
-    cb_engantiice,
-    cb_starter
+    switch_2h8unused,
+    switch_2h8unused
   },
   [7] = {
-    cb_igniter,
-    cb_fadec,
-    cb_hydsys,
-    cb_pedalstop,
-    cb_ldglights,
-    cb_ldglightscont,
-    cb_cautionlights,
-    cb_oatv
+    switch_2h8unused,
+    switch_2h8unused,
+    switch_2h8unused,
+    switch_2h8unused,
+    switch_2h8unused,
+    switch_2h8unused,
+    switch_2h8unused,
+    switch_2h8unused
   },
   [8] = {
-    cb_amps,
-    cb_navcom1,
-    cb_com2,
-    cb_xpndr,
-    cb_gps1,
-    cb_gps2,
-    cb_radalt,
-    cb_4h8unused
+    switch_2h8unused,
+    switch_2h8unused,
+    switch_2h8unused,
+    switch_2h8unused,
+    switch_2h8unused,
+    switch_2h8unused,
+    switch_2h8unused,
+    switch_2h8unused
   }
+}
+
+
+saved_switch_payload = {
+  255,
+  255,
+  255,
+  255,
+  255,
+  255,
+  255,
+  255
 }
