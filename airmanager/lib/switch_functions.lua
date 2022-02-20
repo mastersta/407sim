@@ -92,14 +92,8 @@ function switch_fadechorntest(state)
   xpl_command(command, 1 - state)
 end
 
-headset_state = 0
+
 function switch_overspeedtest(state)
-  if state == 1 then headset_state = 1 - headset_state end
-  print("heaset", headset_state)
-  xpl_dataref_write(
-    "B407/HeadPhone", "FLOAT",
-    headset_state, 0
-  )
 end
 
 
