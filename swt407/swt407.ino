@@ -182,8 +182,8 @@ void setup() {
   mcp_panel1.init_as_switches();
   mcp_panel2.init_as_encoders();
   mcp_overhead1.init_as_switches();
-//  mcp_overhead2.init_as_switches();
-//  mcp_overhead3.init_as_switches();
+  mcp_overhead2.init_as_switches();
+  mcp_overhead3.init_as_switches();
 
   //initialize the analog board
   ads_overhead.init();
@@ -214,8 +214,8 @@ void loop() {
   mcp_panel1.read_and_store();
   //mcp_panel2.read_and_store();    //encoders, don't read
   mcp_overhead1.read_and_store();
-//  mcp_overhead2.read_and_store();
-//  mcp_overhead3.read_and_store();
+  mcp_overhead2.read_and_store();
+  mcp_overhead3.read_and_store();
 
   //read the analog board
   ads_overhead.read_and_store(0);
@@ -223,7 +223,7 @@ void loop() {
   if (encoder_flag) { handle_encoders(); };
 
   //switch payload handling
-  const byte sp_len = 4;  //TODO: ensure to update len
+  const byte sp_len = 8;  //TODO: ensure to update len
   static uint8_t previous_switch_payload[sp_len] = {};
   uint8_t switch_payload[sp_len] = {};
 
@@ -232,10 +232,10 @@ void loop() {
   switch_payload[1] = (mcp_panel1.values >> 8); //high half
   switch_payload[2] =  mcp_overhead1.values;  //low half (top cut off)
   switch_payload[3] = (mcp_overhead1.values >> 8); //high half
-//  switch_payload[4] =  mcp_overhead2.values;  //low half (top cut off)
-//  switch_payload[5] = (mcp_overhead2.values >> 8); //high half
-//  switch_payload[6] =  mcp_overhead3.values;  //low half (top cut off)
-//  switch_payload[7] = (mcp_overhead3.values >> 8); //high half
+  switch_payload[4] =  mcp_overhead2.values;  //low half (top cut off)
+  switch_payload[5] = (mcp_overhead2.values >> 8); //high half
+  switch_payload[6] =  mcp_overhead3.values;  //low half (top cut off)
+  switch_payload[7] = (mcp_overhead3.values >> 8); //high half
   
   //check if the payload has changed
   bool payload_changed = false;
