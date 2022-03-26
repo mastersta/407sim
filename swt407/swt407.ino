@@ -14,7 +14,7 @@
 #define analog_message_id 3
 
 //misc
-#define analog_change_margin 128
+#define analog_change_margin 64
 
 //interrupt handling
 #define encoder_interrupt_pin 7
@@ -35,6 +35,9 @@ TLC59116 tlc_array[3] = {
 //init messageport
 SiMessagePort* messagePort;
 
+//keep track of last message time from AM
+unsigned long am_incoming_time = millis();
+
 
 
 
@@ -53,36 +56,36 @@ static void new_message_callback(
   struct SiMessagePortPayload* payload) {
 
   //bus volts pwm value from instrument
-  static int volts_pwm = 255;
-
-  //binary annunciator light status
-  static unsigned int annunciator_data[3] = {0, 0, 0};
-
-  //above with pwm value applied
-  static byte annunciator_pwm[3][16];
-
+//  static int volts_pwm = 255;
 
   //0 = annunciator light status data
-  if (message_id == 0) {
-    
-    volts_pwm = payload->data_int[3];
-    
-    //iterate over each int32 in the payload
-    for (byte i = 0; i < 3; i++) {
-      
-      //drop into annunciator data (uint16 casted automatically)
-      annunciator_data[i] = payload->data_int[i];
+  if (message_id == 0) { update_annunciator(payload->data_int); };
 
-      //iterate over each bit, apply current bus voltage pwm value
-      for (byte j = 0; j < 16; j++) {
-        tlc_array[i].analogWrite(j,(bitRead(annunciator_data[i], j) * volts_pwm));
-      };
-      
-    };
-
-  };
+  //reset the timer
+  am_incoming_time = millis();
 
 };
+
+
+void update_annunciator(int32_t *annunciator_data) {
+
+  static int volts_pwm = 255;
+  volts_pwm = annunciator_data[3];
+    
+  //iterate over each int32 in the payload
+  for (byte i = 0; i < 3; i++) {
+    
+    //drop into annunciator data (uint16 casted automatically)
+    annunciator_data[i] = annunciator_data[i];
+
+    //iterate over each bit, apply current bus voltage pwm value
+    for (byte j = 0; j < 16; j++) {
+      tlc_array[i].analogWrite(j,(bitRead(annunciator_data[i], j) * volts_pwm));
+    };
+      
+  };
+
+}
 
 
 
@@ -278,10 +281,13 @@ void loop() {
   //new payload is ready
   messagePort->Tick();
 
-  //debug to let us know the main loop is still running
-  //int on_off = (millis()%1000>500);
-  //digitalWrite(17, on_off);
+  //if it's been 3 seconds since the last AM message, darken the annunciator
+  uint32_t temp_data[] = {0,0,0,255};
+  if ((millis() - am_incoming_time) > 3000) {
+    update_annunciator(temp_data);
+  };
 
+  //reset the watchdog timer
   wdt_reset();
 
 };
