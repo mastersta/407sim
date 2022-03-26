@@ -494,7 +494,7 @@ end
 function cb_fadec(state)
   dataref = "sim/operation/failures/rel_fadec_0"
   print("cb fadec")
-  output = state * 6
+  output = (1 - state) * 6
   xpl_dataref_write(
     dataref, "INT",
     output, 0
@@ -582,9 +582,9 @@ end
 function cb_navcom1(state)
   dataref = "sim/operation/failures/rel_navcom1"
   print("cb navcom1")
-  output = state * 6
+  output = (1 - state) * 6
   xpl_dataref_write(
-    dataref, "FLOAT",
+    dataref, "INT",
     output, 0
   )
 end
@@ -593,9 +593,9 @@ end
 function cb_com2(state)
   dataref = "sim/operation/failures/rel_navcom2"
   print("cb com2")
-  output = state * 6
+  output = (1 - state) * 6
   xpl_dataref_write(
-    dataref, "FLOAT",
+    dataref, "INT",
     output, 0
   )
 end
@@ -604,9 +604,9 @@ end
 function cb_xpdr(state)
   dataref = "sim/operation/failures/rel_xpndr"
   print("cb xpdr")
-  output = state * 6
+  output = (1 - state) * 6
   xpl_dataref_write(
-    dataref, "FLOAT",
+    dataref, "INT",
     output, 0
   )
 end
@@ -615,9 +615,9 @@ end
 function cb_gps1(state)
   dataref = "sim/operation/failures/rel_gps"
   print("cb gps1")
-  output = state * 6
+  output = (1 - state) * 6
   xpl_dataref_write(
-    dataref, "FLOAT",
+    dataref, "INT",
     output, 0
   )
 end
@@ -626,9 +626,9 @@ end
 function cb_gps2(state)
   dataref = "sim/operation/failures/rel_gps2"
   print("cb gps2")
-  output = state * 6
+  output = (1 - state) * 6
   xpl_dataref_write(
-    dataref, "FLOAT",
+    dataref, "INT",
     output, 0
   )
 end
@@ -714,14 +714,14 @@ switch_table = {
     cb_start
   },
   [7] = {
-    cb_igntr,
-    cb_fadec,
-    cb_hydsys,
-    cb_pedalstop,
-    cb_ldglightspwr,
-    cb_ldglightscont,
+    cb_oatv,
     cb_instrlights,
-    cb_oatv
+    cb_ldglightscont,
+    cb_ldglightspwr,
+    cb_pedalstop,
+    cb_hydsys,
+    cb_fadec,
+    cb_igntr
   },
   [8] = {
     cb_amps,
