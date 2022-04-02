@@ -341,6 +341,30 @@ xpl_dataref_subscribe(
   af_overhead_lights
 )
 
+function af_ks_navgps(input1, input2)
+  output = booltonum(input1 == 0 and input2 == 1)
+  output2 = booltonum(input1 == 2 and input2 == 1)
+  annunciator_write(3, 9, output)
+  annunciator_write(3, 10, output2)
+end
+xpl_dataref_subscribe(
+  "sim/cockpit2/radios/actuators/HSI_source_select_pilot", "INT",
+  "sim/cockpit2/switches/avionics_power_on", "INT",
+  af_ks_navgps
+)
+
+function af_ks_sason(input1, input2)
+  output1 = booltonum(input2 == 1)
+  output2 = booltonum(input1 >= 0.5 and input2 == 1)
+  annunciator_write(3, 11, output1)
+  annunciator_write(3, 12, output2)
+end
+xpl_dataref_subscribe(
+  "Helisas/info/ANN_SAS", "FLOAT",
+  "sim/cockpit2/switches/avionics_power_on", "INT",
+  af_ks_sason
+)
+
 test_button = 0
 bus_volts = 0
 instr_brt = 1
