@@ -3,7 +3,7 @@ Resources for a two-seater home cockpit based around the Dreamfoil Bell 407 for 
 
 ## Current State of Things
 
-**Last updated: 20 Feb 2022**
+**Last updated: 19 Aug 2022**
 
 ☑ Main frame constructed 
 
@@ -41,6 +41,8 @@ Resources for a two-seater home cockpit based around the Dreamfoil Bell 407 for 
 
 ☑ GPS panel constructed
 
+☑ Design circuit breakers and install
+
 ## Next Steps
 
 ### Software side
@@ -51,12 +53,10 @@ Resources for a two-seater home cockpit based around the Dreamfoil Bell 407 for 
 
 ### Hardware side
 
---Design circuit breakers and install [1/2 complete]
-
 --Design and install rotor brake
 
---Design and install Korry switch panel
+--Design and install Korry switch panel [in progress]
 
 --Design and install collective hat/joy addon
 
---Redesign cyclic mechanism
+--Redesign cyclic mechanism [in progress]
