@@ -301,12 +301,6 @@ xpl_dataref_subscribe(
 function af_engine_out(input)
   output = booltonum(input[1] < 55)
   annunciator_write(3, 2, output)
-
-  don_headset = booltonum(input[1] > 40)
-  xpl_dataref_write(
-    "B407/HeadPhone", "FLOAT",
-    don_headset, 0
-  )
 end
 xpl_dataref_subscribe(
   "sim/flightmodel2/engines/N1_percent",         "FLOAT[8]",
@@ -325,6 +319,12 @@ xpl_dataref_subscribe(
 function af_rpm(input)
   output = booltonum(input[1] < 392 or input[1] > 442)
   annunciator_write(3, 4, output)
+
+  don_headset = booltonum(input[1] > 165)
+  xpl_dataref_write(
+    "B407/HeadPhone", "FLOAT",
+    don_headset, 0
+  )
 end
 xpl_dataref_subscribe(
   "sim/cockpit2/engine/indicators/prop_speed_rpm","FLOAT[8]",
