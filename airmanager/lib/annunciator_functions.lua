@@ -365,6 +365,16 @@ xpl_dataref_subscribe(
   af_ks_sason
 )
 
+function af_ks_fadecautoman(input1)
+  output1 = booltonum(input1 == 1)
+  annunciator_write(3, 13, output1)
+  annunciator_write(3, 14, 1 - output1)
+end
+xpl_dataref_subscribe(
+  "B407/Fadec", "FLOAT",
+  af_ks_fadecautoman
+)
+
 test_button = 0
 bus_volts = 0
 instr_brt = 1
