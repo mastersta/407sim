@@ -238,8 +238,8 @@ end
 
 
 function switch_pitotheater(state)
-  command0 = "B407/overhead/on/pitot_heater"
-  command1 = "B407/overhead/off/pitot_heater"
+  command0 = "sim/ice/pitot_heat0_on"
+  command1 = "sim/ice/pitot_heat0_off"
 
   toggle_command(command0, command1, state)
 end
@@ -280,10 +280,18 @@ end
 
 
 function switch_instrumentdg(state)
-  command0 = "B407/overhead/on/flightinstr_dg"
-  command1 = "B407/overhead/off/flightinstr_dg"
+--  command0 = "B407/overhead/on/flightinstr_dg"
+--  command1 = "B407/overhead/off/flightinstr_dg"
 
-  toggle_command(command0, command1, state)
+--  toggle_command(command0, command1, state)
+
+  dataref = "sim/operation/failures/rel_ss_dgy"
+  print("sw dg")
+  output = state * 6
+  xpl_dataref_write(
+    dataref, "INT",
+    output, 0
+  )
 end
 
 
