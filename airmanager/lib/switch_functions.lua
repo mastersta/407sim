@@ -73,7 +73,7 @@ end
 function switch_hornmute(state)
   if icao == "B06" then
     command = "206B3/Buttons/mutehorn_cmd"
-  else if icao == "B407" then
+  elseif icao == "B407" then
     command = "B407/horn_mute"
   else
     command = ""
@@ -302,7 +302,7 @@ function switch_hydraulics(state)
     command0 = "B407/overhead/on/hydr_sys"
     command1 = "B407/overhead/off/hydr_sys"
     toggle_command(command0, command1, state)
-  else if icao == "B06" then
+  elseif icao == "B06" then
     dataref = "206B3/hydraulics/onoff"
     xpl_dataref_write(dataref, "INT", 1 - state, 0)
   else
@@ -373,7 +373,7 @@ function switch_fuelpumpleft(state)
     command0 = "B407/overhead/on/boostxfr_left"
     command1 = "B407/overhead/off/boostxfr_left"
     toggle_command(command0, command1, state)
-  else if icao == "B06" then
+  elseif icao == "B06" then
     dataref = "206B3/fuel/boost/aft/br"
     xpl_dataref_write(dataref, "INT", state, 0)
   else
@@ -392,7 +392,7 @@ function switch_fuelpumpright(state)
     command0 = "B407/overhead/on/boostxfr_right"
     command1 = "B407/overhead/off/boostxfr_right"
     toggle_command(command0, command1, state)
-  else if icao == "B06" then
+  elseif icao == "B06" then
     dataref = "206B3/fuel/boost/fwd/br"
     xpl_dataref_write(dataref, "INT", state, 0)
   else
