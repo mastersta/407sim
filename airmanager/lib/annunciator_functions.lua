@@ -614,10 +614,3 @@ xpl_dataref_subscribe(
   "B407/HiNR_Horn",  "FLOAT",
   "B407/LoNR_Horn",  "FLOAT",
   update_horns)
-
-  
-  --don_headset = booltonum(input[1] > 165)
-  --xpl_dataref_write(
-  --  "B407/HeadPhone", "FLOAT",
-  --  don_headset, 0
-  --)

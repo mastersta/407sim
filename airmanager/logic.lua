@@ -7,8 +7,16 @@ icao = "" --initialize aircraft icao
 function update_icao(input)
   icao = input
 end
-xpl_dataref_subscribe("sim/aircraft/view/acf_ICAO", "STRING", update_icao)
+xpl_dataref_subscribe(
+  "sim/aircraft/view/acf_ICAO", "STRING", update_icao)
 
+--TODO: test
+function don_headset(input)
+  don_headset = booltonum(input[1] > 40)
+  xpl_dataref_write("B407/HeadPhone", "FLOAT", don_headset, 0)
+end
+xpl_dataref_subscribe(
+  "sim/cockpit2/engine/indicators/N2_percent", "FLOAT[8]", don_headset)
 
 
 --switches that are ON are 0 due to the pullups
