@@ -1,6 +1,13 @@
 --407simV2 hardware communication instrument
 --global variables
 timer_delay = 10
+ 
+--TODO: test
+icao = "" --initialize aircraft icao
+function update_icao(input)
+  icao = input
+end
+xpl_dataref_subscribe("sim/aircraft/view/acf_ICAO", "STRING", update_icao)
 
 
 
