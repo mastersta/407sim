@@ -47,7 +47,7 @@ icao = ""
 
 --payload 1, panel1 low
 function switch_fuelvalve(state)
-  if icao == "B06" then
+  if icao == "206B3" then
     output = 1 - state
     dataref = "206B3/fuel/valve"
     xpl_dataref_write(dataref, "FLOAT", output, 0)
@@ -60,7 +60,7 @@ end
 
 
 function switch_annunciatortest(state)
-  if icao == "B06" then
+  if icao == "206B3" then
     command = "206B3/Buttons/cauttest_cmd"
   else
     command = "sim/annunciator/test_all_annunciators"
@@ -71,7 +71,7 @@ end
 
 
 function switch_hornmute(state)
-  if icao == "B06" then
+  if icao == "206B3" then
     command = "206B3/Buttons/mutehorn_cmd"
   elseif icao == "B407" then
     command = "B407/horn_mute"
@@ -302,7 +302,7 @@ function switch_hydraulics(state)
     command0 = "B407/overhead/on/hydr_sys"
     command1 = "B407/overhead/off/hydr_sys"
     toggle_command(command0, command1, state)
-  elseif icao == "B06" then
+  elseif icao == "206B3" then
     dataref = "206B3/hydraulics/onoff"
     xpl_dataref_write(dataref, "INT", 1 - state, 0)
   else
@@ -373,9 +373,12 @@ function switch_fuelpumpleft(state)
     command0 = "B407/overhead/on/boostxfr_left"
     command1 = "B407/overhead/off/boostxfr_left"
     toggle_command(command0, command1, state)
-  elseif icao == "B06" then
+  elseif icao == "206B3" then
     dataref = "206B3/fuel/boost/aft/br"
     xpl_dataref_write(dataref, "INT", state, 0)
+    command0 = "sim/fuel/fuel_pump_1_on"
+    command1 = "sim/fuel/fuel_pump_1_off"
+    toggle_command(command0, command1, state)
   else
     command0 = "sim/fuel/fuel_tank_pump_1_on"
     command1 = "sim/fuel/fuel_tank_pump_1_off"
@@ -392,9 +395,12 @@ function switch_fuelpumpright(state)
     command0 = "B407/overhead/on/boostxfr_right"
     command1 = "B407/overhead/off/boostxfr_right"
     toggle_command(command0, command1, state)
-  elseif icao == "B06" then
+  elseif icao == "206B3" then
     dataref = "206B3/fuel/boost/fwd/br"
     xpl_dataref_write(dataref, "INT", state, 0)
+    command0 = "sim/fuel/fuel_pump_2_on"
+    command1 = "sim/fuel/fuel_pump_2_off"
+    toggle_command(command0, command1, state)
   else
     command0 = "sim/fuel/fuel_tank_pump_2_on"
     command1 = "sim/fuel/fuel_tank_pump_2_off"
@@ -407,7 +413,7 @@ end
 
 
 function switch_instrumentdg(state)
-  if icao == "B06" then
+  if icao == "206B3" then
     dataref = "206B3/dg_att"
     output = 1 - state
   else

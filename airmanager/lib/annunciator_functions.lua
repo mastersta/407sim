@@ -4,11 +4,12 @@ annunciator_payload = {0,0,0,255}
 icao = ""
 
 function annunciator_write(payload, bit, value)
-  annunciator_payload[payload] = bitwrite(
-    annunciator_payload[payload],
-    bit,
-    value
-  )
+  if value == nil then
+    print("ERROR - NIL VALUE FOUND AT ANN: " .. payload .. "/" .. bit)
+    print(icao)
+  else
+    annunciator_payload[payload] = bitwrite(annunciator_payload[payload], bit, value)
+  end
   generate_payload()
 end
 
@@ -31,7 +32,7 @@ xpl_dataref_subscribe(
 function af_engine_anti_ice(input1, input2)
   if icao == "B407" then
     output = input1
-  elseif icao == "B06" then
+  elseif icao == "206B3" then
     output = input2
   else
     output = input1
@@ -40,14 +41,14 @@ function af_engine_anti_ice(input1, input2)
 end
 xpl_dataref_subscribe(
   "sim/cockpit2/ice/ice_inlet_heat_on",                     "INT",    --B407
-  "sim/cockpit2/ice/cowling_thermal_anti_ice_per_engine",   "INT[8]", --B06 
+  "sim/cockpit2/ice/cowling_thermal_anti_ice_per_engine",   "INT[8]", --206B3 
   af_engine_anti_ice
 )
 
 function af_float_arm(input1, input2)
   if icao == "B407" then
     output = input1
-  elseif icao == "B06" then
+  elseif icao == "206B3" then
     output = input2
   else
     output = 0 --no generic replacement
@@ -61,12 +62,17 @@ xpl_dataref_subscribe(
 )
 
 --TODO: test
-function af_auto_relight(input)
-  output = booltonum(input > 0)
+function af_auto_relight(input1, input2)
+  if icao == "206B3" then
+    output = 0
+  else
+    output = input2[1]
+  end  
   annunciator_write(1, 5, output)
 end
 xpl_dataref_subscribe(
-  "sim/cockpit2/annunciators/auto_ignition",        "INT",  
+  "206B3/ignite",                                                "INT",
+  "sim/cockpit2/annunciators/igniter_on",        "INT[8]",  
   af_auto_relight
 )
 
@@ -107,7 +113,6 @@ xpl_dataref_subscribe(
   af_litter_door
 )
 
---TODO: test
 function af_heater_overtemp(input)
   output = 0
   annunciator_write(1, 9, output)
@@ -120,7 +125,7 @@ xpl_dataref_subscribe(
 function af_lfuel_boost(input1, input2)
   if icao == "B407" then
     output = booltonum(input1[1] == 0)
-  elseif icao == "B06" then
+  elseif icao == "206B3" then
     output = input2
   else
     output = booltonum(input1[1] == 0)
@@ -139,19 +144,21 @@ function af_lfuel_xfer(input)
   --possibly sim/cockpit2/fuel_transfer[1]?
 end
 
-function af_fuel_filter(input)
-  output = (input > 0) 
+function af_fuel_filter(input1, input2, input3)
+  output = booltonum((input1 > 0) or (input2 > 0)) 
   annunciator_write(1, 12, output)
 end
 xpl_dataref_subscribe(
   "sim/operation/failures/rel_fuel_block0",         "INT",
+  "sim/operation/failures/rel_fuelfl0",                 "INT",
+  "sim/cockpit2/annunciators/fuel_pressure",    "INT",
   af_fuel_filter
 )
 
 function af_rfuel_boost(input1, input2)
   if icao == "B407" then
     output = booltonum(input1[2] == 0)
-  elseif icao == "B06" then
+  elseif icao == "206B3" then
     output = input2
   else
     output = booltonum(input1[2] == 0)
@@ -173,17 +180,17 @@ end
 function af_fuel_valve(input1, input2, input3)
   if icao == "B407" then
     output = input1
-  elseif icao == "B06" then
+  elseif icao == "206B3" then
     output = 1 - input2
   else
-    output = (input3 == 0)
+    output = booltonum(input3 == 0)
   end
   annunciator_write(1, 15, output)
 end
 xpl_dataref_subscribe(
   "B407/FuelValveMoving",                           "FLOAT",  
   "206B3/fuel/valve",                               "FLOAT",  
-  "sim/cockpit2/fuel/fuel_tank_selector,"           "INT",
+  "sim/cockpit2/fuel/fuel_tank_selector",           "INT",
   af_fuel_valve
 )
 
@@ -228,12 +235,11 @@ xpl_dataref_subscribe(
   af_fadec_degraded
 )
 
---TODO: test
 function af_manual_fadec(input1, input2)
   if icao == "B407" then
-    output = booltonum(input1 == 0)
+    output = 1 - input1
   else
-    output = input2[1]
+    output = 1 - input2[1]
   end
   annunciator_write(2, 5, output)
 end
@@ -244,7 +250,7 @@ xpl_dataref_subscribe(
 )
 
 function af_engine_chip(input1, input2)
-  if icao == "B06" then
+  if icao == "206B3" then
     output = input1
   else
     output = input2
@@ -258,7 +264,7 @@ xpl_dataref_subscribe(
 )
 
 function af_xmsn_chip(input)
-  if icao == "B06" then
+  if icao == "206B3" then
     output = input
   else
     output = 0 --no generic replacement
@@ -271,7 +277,7 @@ xpl_dataref_subscribe(
 )
 
 function af_tr_chip(input1, input2)
-  if icao == "B06" then
+  if icao == "206B3" then
     output = input1
   else
     output = booltonum(input2 == 6)
@@ -284,7 +290,6 @@ xpl_dataref_subscribe(
   af_tr_chip
 )
 
---TODO: test
 function af_gen_fail(input)
   output = input
   annunciator_write(2, 9, output)
@@ -297,8 +302,8 @@ xpl_dataref_subscribe(
 function af_xmsn_oil_press(input1, input2)
   if icao == "B407" then
     output = booltonum(input1 < 3.3)
-  elseif icao == "B06" then
-    output = input
+  elseif icao == "206B3" then
+    output = input2
   else
     output = 0 --no generic replacement
   end
@@ -348,7 +353,7 @@ xpl_dataref_subscribe(
 function af_xmsn_oil_temp(input1, input2)
   if icao == "B407" then
     output = booltonum(input1 > 11)
-  elseif icao == "B06" then
+  elseif icao == "206B3" then
     output = input2
   else
     output = 0 --no generic replacement
@@ -365,7 +370,7 @@ function af_hyd_sys(input1, input2)
   if icao == "B407" then
     output = booltonum(input1 < 650)
   else
-    output = input
+    output = input2
   end
   annunciator_write(2, 14, output)
 end
@@ -375,9 +380,9 @@ xpl_dataref_subscribe(
   af_hyd_sys
 )
 
---TODO: test
+--TODO: activate after certain time on
 function af_battery_hot(input)
-  output = booltonum(input == 6)
+  output = input
   annunciator_write(2, 15, output)
 end
 xpl_dataref_subscribe(
@@ -385,13 +390,12 @@ xpl_dataref_subscribe(
   af_battery_hot
 )
 
---TODO: test
 function af_engine_ovspd(input)
-  output = input[1]
+  output = booltonum(input[1] > 102.1)
   annunciator_write(2, 16, output)
 end
 xpl_dataref_subscribe(
-  "sim/cockpit2/annunciators/N1_high",              "INT[8]",
+  "sim/cockpit2/engine/indicators/N2_percent",              "FLOAT[8]",
   af_engine_ovspd
 )
 
@@ -415,15 +419,15 @@ xpl_dataref_subscribe(
   af_cyclic_centering
 )
 
---TODO: test
+--TODO: fix 407 acf for N1 low
 function af_engine_out(input)
-  --output = booltonum(input[1] < 55)
-  output = input[1]
+  output = booltonum(input[1] < 55)
+  --output = input[1]
   annunciator_write(3, 2, output)
 end
 xpl_dataref_subscribe(
-  --"sim/flightmodel2/engines/N1_percent",         "FLOAT[8]",
-  "sim/cockpit2/annunciators/N1_low",               "INT[8]",
+  "sim/flightmodel2/engines/N1_percent",         "FLOAT[8]",
+  --"sim/cockpit2/annunciators/N1_low",               "INT[8]",
   af_engine_out
 )
 
@@ -440,15 +444,20 @@ xpl_dataref_subscribe(
   af_pedal_stop
 )
 
---TODO: test
-function af_rpm(input)
-  --output = booltonum(input[1] < 392 or input[1] > 442)
-  output = input
+--TODO: fix 407 acf for NR low
+function af_rpm(input1, input2)
+  if icao == "B407" then
+    output = booltonum(input1[1] < 392 or input1[1] > 442)
+  elseif icao == "206B3" then
+    output = booltonum(input1[1] < 355)
+  else
+    output = input2
+  end
   annunciator_write(3, 4, output)
 end
 xpl_dataref_subscribe(
-  "sim/cockpit2/annunciators/low_rotor",            "INT",
-  --"sim/cockpit2/engine/indicators/prop_speed_rpm","FLOAT[8]",
+  "sim/cockpit2/engine/indicators/prop_speed_rpm","FLOAT[8]",
+  "sim/cockpit2/annunciators/low_rotor",                   "INT",
   af_rpm
 )
 
