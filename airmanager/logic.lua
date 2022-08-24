@@ -2,7 +2,6 @@
 --global variables
 timer_delay = 10
  
---TODO: test
 icao = "" --initialize aircraft icao
 function update_icao(input)
   icao = input
@@ -10,10 +9,11 @@ end
 xpl_dataref_subscribe(
   "sim/aircraft/view/acf_ICAO", "STRING", update_icao)
 
---TODO: test
 function don_headset(input)
   don_headset = booltonum(input[1] > 40)
-  xpl_dataref_write("B407/HeadPhone", "FLOAT", don_headset, 0)
+  if icao == "B407" then
+    xpl_dataref_write("B407/HeadPhone", "FLOAT", don_headset, 0)
+  end
 end
 xpl_dataref_subscribe(
   "sim/cockpit2/engine/indicators/N2_percent", "FLOAT[8]", don_headset)

@@ -28,7 +28,6 @@ xpl_dataref_subscribe(
   af_engine_fire
 )
 
---TODO: test
 function af_engine_anti_ice(input1, input2)
   if icao == "B407" then
     output = input1
@@ -61,7 +60,6 @@ xpl_dataref_subscribe(
   af_float_arm
 )
 
---TODO: test
 function af_auto_relight(input1, input2)
   if icao == "206B3" then
     output = 0
@@ -85,7 +83,6 @@ xpl_dataref_subscribe(
   af_start
 )
 
---TODO: find a better generic and test
 function af_baggage_door(input1, input2)
   if icao == "B407" then
     output = booltonum(input1 > 0.01)

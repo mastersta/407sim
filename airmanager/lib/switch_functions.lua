@@ -90,7 +90,6 @@ function switch_instrumentcheck(state)
   else
     command = ""
   end
-  --TODO: determine default
 
   xpl_command(command, 1 - state)
 end
@@ -102,7 +101,6 @@ function switch_lcdtest(state)
   else
     command = ""
   end
-  --TODO: determine default
 
   xpl_command(command, 1 - state)
 end
@@ -114,7 +112,6 @@ function switch_fuelquantity(state)
   else
     command = ""
   end
-  --TODO: determine default
 
   xpl_command(command, 1 - state)
 end
@@ -126,7 +123,6 @@ function switch_fadechorntest(state)
   else
     command = ""
   end
-  --TODO: determine default
 
   xpl_command(command, 1 - state)
 end
@@ -156,13 +152,13 @@ function switch_pedalstop(state)
 end
 
 
+--TODO: create generic OATV/Timer instrument and link to hardware
 function switch_oatvselect(state)
   if icao == "B407" then
     command = "B407/Clock/efc_select"
   else
     command = ""
   end
-  --TODO: determine default
 
   print("oatv select")
   xpl_command(command, 1 - state)
@@ -174,7 +170,6 @@ function switch_clockselect(state)
     command = "B407/Clock/select"
   else
     command = "sim/instruments/timer_mode"
-    --TODO: test this
   end
 
   print("clock select")
@@ -187,7 +182,6 @@ function switch_clockcontrol(state)
     command = "B407/Clock/control"
   else
     command = "sim/instruments/timer_cycle"
-    --TODO: test this
   end
 
   print("clock control")
@@ -222,7 +216,6 @@ function switch_gps2home(state)
   else
     command = ""
   end
-  --TODO: determine default
 
   print("gps 2 home")
   xpl_command(command, 1 - state)
@@ -247,7 +240,6 @@ function switch_gps2encpb(state)
   else
     command = ""
   end
-  --TODO: determine default
 
   print("gps 2 encoder pb")
   xpl_command(command, 1 - state)
@@ -333,7 +325,6 @@ function switch_engineantiice(state)
   else
     command0 = "sim/ice/inlet_eai0_on"
     command1 = "sim/ice/inlet_eai0_off"
-    --TODO: test with bell 206
   end
 
   toggle_command(command0, command1, state)
