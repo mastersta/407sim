@@ -68,10 +68,9 @@ function switch_annunciatortest(state)
     command = "206B3/Buttons/cauttest_cmd"
   elseif icao == "206L3" then
     command = "206L3/Buttons/cauttest_cmd"
-  else
-    command = "sim/annunciator/test_all_annunciators"
   end
-
+  xpl_command(command, 1 - state)
+  command = "sim/annunciator/test_all_annunciators"
   xpl_command(command, 1 - state)
 end
 
