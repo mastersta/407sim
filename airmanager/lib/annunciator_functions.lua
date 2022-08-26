@@ -31,7 +31,7 @@ xpl_dataref_subscribe(
 function af_engine_anti_ice(input1, input2)
   if icao == "B407" then
     output = input1
-  elseif icao == "206B3" then
+  elseif icao == "206B3" or icao == "206L3" then
     output = input2
   else
     output = input1
@@ -44,11 +44,13 @@ xpl_dataref_subscribe(
   af_engine_anti_ice
 )
 
-function af_float_arm(input1, input2)
+function af_float_arm(input1, input2, input3)
   if icao == "B407" then
     output = input1
   elseif icao == "206B3" then
     output = input2
+  elseif icao == "206L3" then
+    output = input3
   else
     output = 0 --no generic replacement
   end
@@ -57,19 +59,24 @@ end
 xpl_dataref_subscribe(
   "B407/Float_Arm",                                 "FLOAT",  
   "206B3/acc/floats_active",                        "INT",  
+  "206L3/acc/floats_active",                        "INT",  
   af_float_arm
 )
 
-function af_auto_relight(input1, input2)
+--TODO: fix for 206's
+function af_auto_relight(input1, input2, input3)
   if icao == "206B3" then
-    output = 0
+    output = 0 --disabled
+  elseif icao == "206L3" then
+    output = 0 --disabled
   else
-    output = input2[1]
+    output = input3[1]
   end  
   annunciator_write(1, 5, output)
 end
 xpl_dataref_subscribe(
   "206B3/ignite",                                                "INT",
+  "206L3/ignite",                                                "INT",
   "sim/cockpit2/annunciators/igniter_on",        "INT[8]",  
   af_auto_relight
 )
@@ -119,11 +126,13 @@ xpl_dataref_subscribe(
   af_heater_overtemp
 )
 
-function af_lfuel_boost(input1, input2)
+function af_lfuel_boost(input1, input2, input3)
   if icao == "B407" then
     output = booltonum(input1[1] == 0)
   elseif icao == "206B3" then
     output = input2
+  elseif icao == "206L3" then
+    output = input3
   else
     output = booltonum(input1[1] == 0)
   end
@@ -133,6 +142,7 @@ end
 xpl_dataref_subscribe(
   "sim/cockpit2/fuel/fuel_tank_pump_on",            "INT[8]",  
   "206B3/fuel/boost/aft/br",                        "INT",
+  "206L3/fuel/boost/aft/br",                        "INT",
   af_lfuel_boost
 )
 
@@ -152,11 +162,13 @@ xpl_dataref_subscribe(
   af_fuel_filter
 )
 
-function af_rfuel_boost(input1, input2)
+function af_rfuel_boost(input1, input2, input3)
   if icao == "B407" then
     output = booltonum(input1[2] == 0)
   elseif icao == "206B3" then
     output = input2
+  elseif icao == "206L3" then
+    output = input3
   else
     output = booltonum(input1[2] == 0)
   end
@@ -166,6 +178,7 @@ end
 xpl_dataref_subscribe(
   "sim/cockpit2/fuel/fuel_tank_pump_on",            "INT[8]",  
   "206B3/fuel/boost/fwd/br",                        "INT",  
+  "206L3/fuel/boost/fwd/br",                        "INT",  
   af_rfuel_boost
 )
 
@@ -174,19 +187,22 @@ function af_rfuel_xfer(input)
   --possibly sim/cockpit2/fuel_transfer[2]?
 end
 
-function af_fuel_valve(input1, input2, input3)
+function af_fuel_valve(input1, input2, input3, input4)
   if icao == "B407" then
     output = input1
   elseif icao == "206B3" then
     output = 1 - input2
+  elseif icao == "206L3" then
+    output = 1 - input3
   else
-    output = booltonum(input3 == 0)
+    output = booltonum(input4 == 0)
   end
   annunciator_write(1, 15, output)
 end
 xpl_dataref_subscribe(
   "B407/FuelValveMoving",                           "FLOAT",  
   "206B3/fuel/valve",                               "FLOAT",  
+  "206L3/fuel/valve",                               "FLOAT",  
   "sim/cockpit2/fuel/fuel_tank_selector",           "INT",
   af_fuel_valve
 )
@@ -246,23 +262,28 @@ xpl_dataref_subscribe(
   af_manual_fadec
 )
 
-function af_engine_chip(input1, input2)
+function af_engine_chip(input1, input2, input3)
   if icao == "206B3" then
     output = input1
-  else
+  elseif icao == "206L3" then
     output = input2
+  else
+    output = input3
   end
   annunciator_write(2, 6, output)
 end
 xpl_dataref_subscribe(
   "206B3/caut/ENG_chip",                            "INT",
+  "206L3/caut/ENG_chip",                            "INT",
   "sim/cockpit2/annunciators/chip_detect",          "INT",
   af_engine_chip
 )
 
-function af_xmsn_chip(input)
+function af_xmsn_chip(input1, input2)
   if icao == "206B3" then
-    output = input
+    output = input1
+  elseif icao == "206L3" then
+    output = input2
   else
     output = 0 --no generic replacement
   end
@@ -270,19 +291,23 @@ function af_xmsn_chip(input)
 end
 xpl_dataref_subscribe(
   "206B3/caut/MR_chip",                             "INT",
+  "206L3/caut/MR_chip",                             "INT",
   af_xmsn_chip
 )
 
-function af_tr_chip(input1, input2)
+function af_tr_chip(input1, input2, input3)
   if icao == "206B3" then
     output = input1
+  elseif icao == "206L3" then
+    output = input2
   else
-    output = booltonum(input2 == 6)
+    output = booltonum(input3 == 6)
   end
   annunciator_write(2, 8, output)
 end
 xpl_dataref_subscribe(
   "206B3/caut/TR_chip",                             "INT",
+  "206L3/caut/TR_chip",                             "INT",
   "sim/operation/failures/rel_trotor",              "INT",
   af_tr_chip
 )
@@ -296,11 +321,13 @@ xpl_dataref_subscribe(
   af_gen_fail
 )
 
-function af_xmsn_oil_press(input1, input2)
+function af_xmsn_oil_press(input1, input2, input3)
   if icao == "B407" then
     output = booltonum(input1 < 3.3)
   elseif icao == "206B3" then
     output = input2
+  elseif icao == "206L3" then
+    output = input3
   else
     output = 0 --no generic replacement
   end
@@ -309,6 +336,7 @@ end
 xpl_dataref_subscribe(
   "B407/Panel/XMsn_Oil_Psi",                        "FLOAT",
   "206B3/caut/x_oil_press",                         "INT",
+  "206L3/caut/x_oil_press",                         "INT",
   af_xmsn_oil_press
 )
 
@@ -347,11 +375,13 @@ xpl_dataref_subscribe(
   af_battery_rly
 )
 
-function af_xmsn_oil_temp(input1, input2)
+function af_xmsn_oil_temp(input1, input2, input3)
   if icao == "B407" then
     output = booltonum(input1 > 11)
   elseif icao == "206B3" then
     output = input2
+  elseif icao == "206L3" then
+    output = input3
   else
     output = 0 --no generic replacement
   end
@@ -360,6 +390,7 @@ end
 xpl_dataref_subscribe(
   "B407/Panel/XMsn_Oil_C",                          "FLOAT",
   "206B3/caut/x_oil_temp",                          "INT",
+  "206L3/caut/x_oil_temp",                          "INT",
   af_xmsn_oil_temp
 )
 
@@ -446,6 +477,8 @@ function af_rpm(input1, input2)
   if icao == "B407" then
     output = booltonum(input1[1] < 392 or input1[1] > 442)
   elseif icao == "206B3" then
+    output = booltonum(input1[1] < 355)
+  elseif icao == "206L3" then
     output = booltonum(input1[1] < 355)
   else
     output = input2
