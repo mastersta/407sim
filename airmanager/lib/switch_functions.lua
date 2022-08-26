@@ -41,53 +41,88 @@ function toggle_command(command0, command1, state)
   xpl_command(command, 0)
 end
 
+--initialize aircraft icao code, will get updated in logic script
+icao = ""
+
 
 --payload 1, panel1 low
 function switch_fuelvalve(state)
-  command0 = "sim/fuel/fuel_selector_all"
-  command1 = "sim/fuel/fuel_selector_none"
-
-  toggle_command(command0, command1, state)
+  if icao == "206B3" then
+    output = 1 - state
+    dataref = "206B3/fuel/valve"
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    command0 = "sim/fuel/fuel_selector_all"
+    command1 = "sim/fuel/fuel_selector_none"
+    toggle_command(command0, command1, state)
+  end
 end
 
 
 function switch_annunciatortest(state)
-  command = "sim/annunciator/test_all_annunciators"
+  if icao == "206B3" then
+    command = "206B3/Buttons/cauttest_cmd"
+  else
+    command = "sim/annunciator/test_all_annunciators"
+  end
 
   xpl_command(command, 1 - state)
 end
 
 
 function switch_hornmute(state)
-  command = "B407/horn_mute"
+  if icao == "206B3" then
+    command = "206B3/Buttons/mutehorn_cmd"
+  elseif icao == "B407" then
+    command = "B407/horn_mute"
+  else
+    command = ""
+  end
+  --TODO: determine default
 
   xpl_command(command, 1 - state)
 end
 
 
 function switch_instrumentcheck(state)
-  command = "B407/instr_check"
+  if icao == "B407" then
+    command = "B407/instr_check"
+  else
+    command = ""
+  end
 
   xpl_command(command, 1 - state)
 end
 
 
 function switch_lcdtest(state)
-  command = "B407/lcd_test"
+  if icao == "B407" then
+    command = "B407/lcd_test"
+  else
+    command = ""
+  end
 
   xpl_command(command, 1 - state)
 end
 
 
 function switch_fuelquantity(state)
-  command = "B407/fuelqty"
+  if icao == "B407" then
+    command = "B407/fuelqty"
+  else
+    command = ""
+  end
 
   xpl_command(command, 1 - state)
 end
 
 
 function switch_fadechorntest(state)
-  command = "B407/fadec_horn"
+  if icao == "B407" then
+    command = "B407/fadec_horn"
+  else
+    command = ""
+  end
 
   xpl_command(command, 1 - state)
 end
@@ -117,22 +152,38 @@ function switch_pedalstop(state)
 end
 
 
+--TODO: create generic OATV/Timer instrument and link to hardware
 function switch_oatvselect(state)
-  command = "B407/Clock/efc_select"
+  if icao == "B407" then
+    command = "B407/Clock/efc_select"
+  else
+    command = ""
+  end
+
   print("oatv select")
   xpl_command(command, 1 - state)
 end
 
 
 function switch_clockselect(state)
-  command = "B407/Clock/select"
+  if icao == "B407" then
+    command = "B407/Clock/select"
+  else
+    command = "sim/instruments/timer_mode"
+  end
+
   print("clock select")
   xpl_command(command, 1 - state)
 end
 
 
 function switch_clockcontrol(state)
-  command = "B407/Clock/control"
+  if icao == "B407" then
+    command = "B407/Clock/control"
+  else
+    command = "sim/instruments/timer_cycle"
+  end
+
   print("clock control")
   xpl_command(command, 1 - state)
 end
@@ -160,21 +211,36 @@ end
 
 
 function switch_gps2home(state)
-  command = "RXP/GTN/HOME_2"
+  if icao == "B407" then
+    command = "RXP/GTN/HOME_2"
+  else
+    command = ""
+  end
+
   print("gps 2 home")
   xpl_command(command, 1 - state)
 end
 
 
 function switch_gps2dto(state)
-  command = "RXP/GTN/DTO_2"
+  if icao == "B407" then
+    command = "RXP/GTN/DTO_2"
+  else
+    command = "sim/radios/com2_standy_flip"
+  end
+
   print("gps 2 direct-to")
   xpl_command(command, 1 - state)
 end
 
 
 function switch_gps2encpb(state)
-  command = "RXP/GTN/FMS_PUSH_2"
+  if icao == "B407" then
+    command = "RXP/GTN/FMS_PUSH_2"
+  else
+    command = ""
+  end
+
   print("gps 2 encoder pb")
   xpl_command(command, 1 - state)
 end
@@ -198,40 +264,68 @@ end
 
 
 function switch_generatorreset(state)
-  command0 = "B407/overhead/on/generator_1_reset"
-  command1 = "B407/overhead/off/generator_1_off"
-
-  toggle_command(command0, command1, state)
+  if icao == "B407" then
+    command0 = "B407/overhead/on/generator_1_reset"
+    command1 = "B407/overhead/off/generator_1_off"
+    toggle_command(command0, command1, state)
+  else
+    dataref = "sim/operation/failures/relgenera0"
+    xpl_dataref_write(dataref, "INT", 6 - state, 0)
+    --TODO: test this default
+  end
 end
 
 
 function switch_anticollisionlight(state)
-  command0 = "B407/overhead/on/anticollision_lt"
-  command1 = "B407/overhead/off/anticollision_lt"
+  if icao == "B407" then
+    command0 = "B407/overhead/on/anticollision_lt"
+    command1 = "B407/overhead/off/anticollision_lt"
+  else
+    command0 = "sim/lights/beacon_lights_on"
+    command1 = "sim/lights/beacon_lights_off"
+  end
 
   toggle_command(command0, command1, state)
 end
 
 
 function switch_hydraulics(state)
-  command0 = "B407/overhead/on/hydr_sys"
-  command1 = "B407/overhead/off/hydr_sys"
-
-  toggle_command(command0, command1, state)
+  if icao == "B407" then
+    command0 = "B407/overhead/on/hydr_sys"
+    command1 = "B407/overhead/off/hydr_sys"
+    toggle_command(command0, command1, state)
+  elseif icao == "206B3" then
+    dataref = "206B3/hydraulics/onoff"
+    xpl_dataref_write(dataref, "INT", 1 - state, 0)
+  else
+    command0 = "sim/electrical/generator_1_on"
+    command1 = "sim/electrical/generator_1_off"
+    toggle_command(command0, command1, state)
+  end
 end
 
 
 function switch_avionicsmaster(state)
-  command0 = "B407/overhead/on/avionics_master"
-  command1 = "B407/overhead/off/avionics_master"
+  if icao == "B407" then
+    command0 = "B407/overhead/on/avionics_master"
+    command1 = "B407/overhead/off/avionics_master"
+  else
+    command0 = "sim/systems/avionics_on"
+    command1 = "sim/systems/avionics_off"
+  end
 
   toggle_command(command0, command1, state)
 end
 
 
 function switch_engineantiice(state)
-  command0 = "B407/overhead/on/eng_antiice"
-  command1 = "B407/overhead/off/eng_antiice"
+  if icao == "B407" then
+    command0 = "B407/overhead/on/eng_antiice"
+    command1 = "B407/overhead/off/eng_antiice"
+  else
+    command0 = "sim/ice/inlet_eai0_on"
+    command1 = "sim/ice/inlet_eai0_off"
+  end
 
   toggle_command(command0, command1, state)
 end
@@ -247,8 +341,13 @@ end
 
 --payload2, overhead1 high
 function switch_positionlight(state)
-  command0 = "B407/overhead/on/pos_lt"
-  command1 = "B407/overhead/off/pos_lt"
+  if icao == "B407" then
+    command0 = "B407/overhead/on/pos_lt"
+    command1 = "B407/overhead/off/pos_lt"
+  else
+    command0 = "sim/lights/nav_lights_on"
+    command1 = "sim/lights/nav_lights_off"
+  end
 
   toggle_command(command0, command1, state)
 end
@@ -256,400 +355,511 @@ end
 
 function switch_cautionlightdim(state)
   output = (state / 2) + 0.5
-  xpl_dataref_write(
-    "sim/cockpit2/switches/panel_brightness_ratio", "FLOAT[4]",
-    output, 0
-  )
+  xpl_dataref_write("sim/cockpit2/switches/panel_brightness_ratio", "FLOAT[4]", output, 0)
 end
 
 
 function switch_fuelpumpleft(state)
-  command0 = "B407/overhead/on/boostxfr_left"
-  command1 = "B407/overhead/off/boostxfr_left"
-
-  toggle_command(command0, command1, state)
+  if icao == "B407" then
+    command0 = "B407/overhead/on/boostxfr_left"
+    command1 = "B407/overhead/off/boostxfr_left"
+    toggle_command(command0, command1, state)
+  elseif icao == "206B3" then
+    dataref = "206B3/fuel/boost/aft/br"
+    xpl_dataref_write(dataref, "INT", state, 0)
+    command0 = "sim/fuel/fuel_pump_1_on"
+    command1 = "sim/fuel/fuel_pump_1_off"
+    toggle_command(command0, command1, state)
+  else
+    command0 = "sim/fuel/fuel_tank_pump_1_on"
+    command1 = "sim/fuel/fuel_tank_pump_1_off"
+    toggle_command(command0, command1, state)
+    command0 = "sim/fuel/left_xfr_on"
+    command1 = "sim/fuel/left_xfr_off"
+    toggle_command(command0, command1, state)
+  end
 end
 
 
 function switch_fuelpumpright(state)
-  command0 = "B407/overhead/on/boostxfr_right"
-  command1 = "B407/overhead/off/boostxfr_right"
-
-  toggle_command(command0, command1, state)
+  if icao == "B407" then
+    command0 = "B407/overhead/on/boostxfr_right"
+    command1 = "B407/overhead/off/boostxfr_right"
+    toggle_command(command0, command1, state)
+  elseif icao == "206B3" then
+    dataref = "206B3/fuel/boost/fwd/br"
+    xpl_dataref_write(dataref, "INT", state, 0)
+    command0 = "sim/fuel/fuel_pump_2_on"
+    command1 = "sim/fuel/fuel_pump_2_off"
+    toggle_command(command0, command1, state)
+  else
+    command0 = "sim/fuel/fuel_tank_pump_2_on"
+    command1 = "sim/fuel/fuel_tank_pump_2_off"
+    toggle_command(command0, command1, state)
+    command0 = "sim/fuel/right_xfr_on"
+    command1 = "sim/fuel/right_xfr_off"
+    toggle_command(command0, command1, state)
+  end
 end
 
 
 function switch_instrumentdg(state)
---  command0 = "B407/overhead/on/flightinstr_dg"
---  command1 = "B407/overhead/off/flightinstr_dg"
+  if icao == "206B3" then
+    dataref = "206B3/dg_att"
+    output = 1 - state
+  else
+    dataref = "sim/operation/failures/rel_ss_dgy"
+    output = state * 6
+  end
 
---  toggle_command(command0, command1, state)
-
-  dataref = "sim/operation/failures/rel_ss_dgy"
   print("sw dg")
-  output = state * 6
-  xpl_dataref_write(
-    dataref, "INT",
-    output, 0
-  )
+  xpl_dataref_write(dataref, "INT", output, 0)
 end
 
 
 function switch_instrumentatt(state)
-  command0 = "B407/overhead/on/flightinstr_att"
-  command1 = "B407/overhead/off/flightinstr_att"
+  if icao == "B407" then
+    command0 = "B407/overhead/on/flightinstr_att"
+    command1 = "B407/overhead/off/flightinstr_att"
+    toggle_command(command0, command1, state)
+  else
+    dataref = "sim/operation/failures/rel_ss_ahz"
+    output = state * 6
+    xpl_dataref_write(dataref, "INT", output, 0)
+  end
 
-  toggle_command(command0, command1, state)
+  print("sw att")
 end
 
 
 function switch_instrumentturn(state)
-  command0 = "B407/overhead/on/flightinstr_turn"
-  command1 = "B407/overhead/off/flightinstr_turn"
+  if icao == "B407" then
+    command0 = "B407/overhead/on/flightinstr_turn"
+    command1 = "B407/overhead/off/flightinstr_turn"
+    toggle_command(command0, command1, state)
+  else
+    dataref = "sim/operation/failures/rel_ss_tsi"
+    output = state * 6
+    xpl_dataref_write(dataref, "INT", output, 0)
+  end
 
-  toggle_command(command0, command1, state)
+  print("sw turncoord")
 end
 
 
 function cb_fuelvalve(state)
-  dataref = "B407/CircuitBreaker/FUEL_VALVE"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/FUEL_VALVE"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  end
+
   print("cb fuel valve")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
 function cb_fuelqty(state)
-  dataref = "B407/CircuitBreaker/FUEL_QTY"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/FUEL_QTY"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    dataref = "sim/operation/failures/rel_g_fuel"
+    output = state * 6
+    xpl_dataref_write(dataref, "INT", output, 0)
+  end
+
   print("cb fuel qty")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
 function cb_fuelpress(state)
-  dataref = "B407/CircuitBreaker/FUEL_PRESS"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/FUEL_PRESS"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    dataref = "sim/operation/failures/rel_fp_ind_0"
+    output = state * 6
+    xpl_dataref_write(dataref, "INT", output, 0)
+  end
+
   print("cb fuel press")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
 function cb_genreset(state)
-  dataref = "B407/CircuitBreaker/GEN_RESET"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/GEN_RESET"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    --no generic alternative
+  end
+  
   print("cb gen reset")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
 function cb_genfield(state)
-  dataref = "B407/CircuitBreaker/GEN_FIELD"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/GEN_FIELD"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    dataref = "sim/operation/failures/rel_genera0"
+    output = state * 6
+    xpl_dataref_write(dataref, "INT", output, 0)
+  end
+
   print("cb gen field")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
 function cb_xmsnoiltemp(state)
-  dataref = "B407/CircuitBreaker/XMSN_TEMP"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/XMSN_TEMP"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    --no generic alternative
+  end
+
   print("cb xmsn oil temp")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
 function cb_xmsnoilpress(state)
-  dataref = "B407/CircuitBreaker/XMSN_PRESS"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/XMSN_PRESS"
+    output = state
+    xpl_dataref_write( dataref, "FLOAT", output, 0)
+  else
+    --no generic alternative
+  end
+
   print("cb xmsn oil press")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
 function cb_mgt(state)
-  dataref = "B407/CircuitBreaker/ENG_MGT"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/ENG_MGT"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    dataref = "sim/operation/failures/rel_g_egt1"
+    output = state * 6
+    xpl_dataref_write(dataref, "INT", output, 0)
+  end
+
   print("cb mgt")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
 function cb_trq(state)
-  dataref = "B407/CircuitBreaker/ENG_TRQ"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/ENG_TRQ"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    dataref = "sim/operation/failures/rel_TRQind0"
+    output = state * 6
+    xpl_dataref_write(dataref, "INT", output, 0)
+  end
+
   print("cb trq")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
 function cb_ng(state)
-  dataref = "B407/CircuitBreaker/ENG_NG"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/ENG_NG"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    dataref = "sim/operation/failures/rel_N1_ind0"
+    output = state * 6
+    xpl_dataref_write(dataref, "INT", output, 0)
+  end
+
   print("cb ng")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
 function cb_np(state)
-  dataref = "B407/CircuitBreaker/ENG_NP"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/ENG_NP"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    dataref = "sim/operation/failures/rel_N2_ind0"
+    output = state * 6
+    xpl_dataref_write(dataref, "INT", output, 0)
+  end
+
   print("cb np")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
 function cb_nr(state)
-  dataref = "B407/CircuitBreaker/ENG_NR"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/ENG_NR"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    dataref = "sim/operation/failures/rel_g_rpm1"
+    output = state * 6
+    xpl_dataref_write(dataref, "INT", output, 0)
+  end
+
   print("cb nr")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
 function cb_engoiltemp(state)
-  dataref = "B407/CircuitBreaker/ENG_TEMP"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/ENG_TEMP"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    dataref = "sim/operation/failures/rel_g_oilt1"
+    output = state * 6
+    xpl_dataref_write(dataref, "INT", output, 0)
+  end
+
   print("cb eng oil temp")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
 function cb_engoilpress(state)
-  dataref = "B407/CircuitBreaker/ENG_PRESS"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/ENG_PRESS"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    dataref = "sim/operation/failures/rel_g_oilp1"
+    output = state * 6
+    xpl_dataref_write(dataref, "INT", output, 0)
+  end
+
   print("cb eng oil press")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 --breaker panel 2 start
 
 function cb_antiice(state)
-  dataref = "B407/CircuitBreaker/ANTI_ICE"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/ANTI_ICE"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    dataref = "sim/operation/failures/rel_ice_inlet_heat"
+    output = state * 6
+    xpl_dataref_write(dataref, "INT", output, 0)
+  end
+
   print("cb anti ice")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
 function cb_start(state)
-  dataref = "B407/CircuitBreaker/START"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/START"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    dataref = "sim/operation/failures/rel_startr0"
+    output = state * 6
+    xpl_dataref_write(dataref, "INT", output, 0)
+  end
+
   print("cb start")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
 function cb_igntr(state)
-  dataref = "B407/CircuitBreaker/IGNITER"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/IGNITER"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    dataref = "sim/operation/failures/rel_ignitr0"
+    output = state * 6
+    xpl_dataref_write(dataref, "INT", output, 0)
+  end
+
   print("cb igntr")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
 function cb_fadec(state)
   dataref = "sim/operation/failures/rel_fadec_0"
-  print("cb fadec")
   output = (1 - state) * 6
-  xpl_dataref_write(
-    dataref, "INT",
-    output, 0
-  )
+  xpl_dataref_write(dataref, "INT", output, 0)
+
+  print("cb fadec")
 end
 
 
 function cb_hydsys(state)
-  dataref = "B407/CircuitBreaker/HYD_SYS"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/HYD_SYS"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    dataref = "sim/operation/failures/rel_hydpmp"
+    output = state * 6
+    xpl_dataref_write(dataref, "INT", output, 0)
+  end
+
   print("cb hyd sys")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
 function cb_pedalstop(state)
-  dataref = "B407/CircuitBreaker/PEDAL_STOP"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/PEDAL_STOP"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    --no generic alternative
+  end
   print("cb pedal stop")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
 function cb_ldglightspwr(state)
-  dataref = "B407/CircuitBreaker/LIGHT_PWR"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/LIGHT_PWR"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    dataref = "sim/operation/failures/rel_lites_land"
+    output = state * 6
+    xpl_dataref_write(dataref, "INT", output, 0)
+    dataref = "sim/operation/failures/rel_lites_taxi"
+    output = state * 6
+    xpl_dataref_write(dataref, "INT", output, 0)
+  end
+
   print("cb ldg lights pwr")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
 function cb_ldglightscont(state)
-  dataref = "B407/CircuitBreaker/LIGHT_CONT"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/LIGHT_CONT"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    --TODO: implement timer based landing light flash
+  end
+
   print("cb ldg lights cont")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
 function cb_instrlights(state)
-  dataref = "B407/CircuitBreaker/LIGHT_INST"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/LIGHT_INST"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    dataref = "sim/operation/failures/rel_lites_ins"
+    output = state * 6
+    xpl_dataref_write(dataref, "INT", output, 0)
+  end
+
   print("cb instr lights")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
 function cb_oatv(state)
-  dataref = "B407/CircuitBreaker/OAT_V"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/OAT_V"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    dataref = "sim/operation/failures/rel_lites_ins"
+    output = state * 6
+    xpl_dataref_write(dataref, "INT", output, 0)
+  end
+
   print("cb oatv")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
 function cb_amps(state)
-  dataref = "B407/CircuitBreaker/AMPS"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/AMPS"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    dataref = "sim/operation/failures/rel_g_gen1"
+    output = state * 6
+    xpl_dataref_write(dataref, "INT", output, 0)
+  end
+
   print("cb amps")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
 function cb_navcom1(state)
   dataref = "sim/operation/failures/rel_navcom1"
-  print("cb navcom1")
   output = (1 - state) * 6
-  xpl_dataref_write(
-    dataref, "INT",
-    output, 0
-  )
+  xpl_dataref_write(dataref, "INT", output, 0)
+
+  print("cb navcom1")
 end
 
 
 function cb_com2(state)
   dataref = "sim/operation/failures/rel_navcom2"
-  print("cb com2")
   output = (1 - state) * 6
-  xpl_dataref_write(
-    dataref, "INT",
-    output, 0
-  )
+  xpl_dataref_write(dataref, "INT", output, 0)
+
+  print("cb com2")
 end
 
 
 function cb_xpdr(state)
   dataref = "sim/operation/failures/rel_xpndr"
-  print("cb xpdr")
   output = (1 - state) * 6
-  xpl_dataref_write(
-    dataref, "INT",
-    output, 0
-  )
+  xpl_dataref_write(dataref, "INT", output, 0)
+
+  print("cb xpdr")
 end
 
 
 function cb_gps1(state)
   dataref = "sim/operation/failures/rel_gps"
-  print("cb gps1")
   output = (1 - state) * 6
-  xpl_dataref_write(
-    dataref, "INT",
-    output, 0
-  )
+  xpl_dataref_write(dataref, "INT", output, 0)
+
+  print("cb gps1")
 end
 
 
 function cb_gps2(state)
   dataref = "sim/operation/failures/rel_gps2"
-  print("cb gps2")
   output = (1 - state) * 6
-  xpl_dataref_write(
-    dataref, "INT",
-    output, 0
-  )
+  xpl_dataref_write(dataref, "INT", output, 0)
+
+  print("cb gps2")
 end
 
 
 function cb_radaralt(state)
-  dataref = "B407/CircuitBreaker/RADAR_ALT"
+  if icao == "B407" then
+    dataref = "B407/CircuitBreaker/RADAR_ALT"
+    output = state
+    xpl_dataref_write(dataref, "FLOAT", output, 0)
+  else
+    --no generic replacement
+  end
+
   print("cb radar alt")
-  output = state
-  xpl_dataref_write(
-    dataref, "FLOAT",
-    output, 0
-  )
 end
 
 
