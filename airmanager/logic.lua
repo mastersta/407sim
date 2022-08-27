@@ -36,14 +36,23 @@ function incoming_message_callback(id, payload)
 
     output = 1 - math.max(0, math.min(1, (payload/1800)))
     if output == 0 then output = 1 end
-    xpl_dataref_write(
-      "sim/cockpit/electrical/instrument_brightness",
-      "FLOAT",
-      output,
-      0)
+    xpl_dataref_write( --GTNs read this for dimming
+      "sim/cockpit/electrical/instrument_brightness", "FLOAT", output, 0
+    )
+    dim_panel(output)
   end
 
 end --function end
 
 
 hw_id = hw_message_port_add("ARDUINO_LEONARDO_A", incoming_message_callback)
+
+--panel dimming
+img_dimmer = img_add_fullscreen("black.png")
+opacity(img_dimmer, 0)
+
+function dim_panel(input)
+  output = math.max((1.1-input), 0.1)
+
+  opacity(img_dimmer, output)
+end
