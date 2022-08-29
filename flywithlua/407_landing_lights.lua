@@ -26,20 +26,24 @@ end
 
 if (PLANE_ICAO == "206L3") then
 	g206landinglightDataRef = XPLMFindDataRef("206L3/ldglts/sw")
+	ll_1_off_com = "sim/lights/landing_01_light_off"
+	ll_1_on_com = "sim/lights/landing_01_light_on"
+	ll_2_off_com = "sim/lights/landing_02_light_off"
+	ll_2_on_com = "sim/lights/landing_02_light_on"
 
 	create_command( "FlyWithLua/206/landing_lights_off", "Landing Lights Off",
                 "",
-                "XPLMSetDatai(g206landinglightDataRef, 0)",
+		"XPLMSetDatai(g206landinglightDataRef, 0); command_once(ll_1_off_com); command_once(ll_2_off_com)",
                 "")
 
 	create_command( "FlyWithLua/206/landing_lights_fwd", "Landing Lights Forward",
                 "",
-                "XPLMSetDatai(g206landinglightDataRef, 1)",
+		"XPLMSetDatai(g206landinglightDataRef, 1); command_once(ll_1_on_com); command_once(ll_2_off_com)",
                 "")
 
 	create_command( "FlyWithLua/206/landing_lights_both", "Landing Lights Both",
                 "",
-                "XPLMSetDatai(g206landinglightDataRef, 2)",
+		"XPLMSetDatai(g206landinglightDataRef, 2); command_once(ll_1_on_com); command_once(ll_2_on_com)",
                 "")
 
 	g206floatArmDataRef = XPLMFindDataRef("206L3/acc/floats_active")
