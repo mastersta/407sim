@@ -27,9 +27,9 @@ function incoming_message_callback(id, payload)
     update_switches(payload)
   end
 
-  if id == 2 then
-    update_encoders(payload)
-  end
+--  if id == 2 then
+--    update_encoders(payload)
+--  end
 
   if id == 3 then
     print("analog payload in: ", payload)
