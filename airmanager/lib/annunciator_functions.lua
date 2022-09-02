@@ -494,7 +494,7 @@ xpl_dataref_subscribe(
 function af_overhead_lights(input)
   output = booltonum(input[1] > 0)
   if input[1] == 1 then output = 0 end
-  annunciator_write(3, 6, output)
+  annunciator_write(3, 5, output)
 end
 xpl_dataref_subscribe(
   "sim/cockpit2/electrical/instrument_brightness_ratio_manual","FLOAT[32]", 
