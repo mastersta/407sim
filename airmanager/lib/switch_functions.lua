@@ -218,7 +218,7 @@ end
 
 
 function switch_gps2home(state)
-  if icao == "B407" then
+  if icao == "B407" or icao == "206B3" then
     command = "RXP/GTN/HOME_2"
   else
     command = ""
@@ -230,7 +230,7 @@ end
 
 
 function switch_gps2dto(state)
-  if icao == "B407" then
+  if icao == "B407" or icao == "206B3" then
     command = "RXP/GTN/DTO_2"
   else
     command = "sim/radios/com2_standy_flip"
@@ -242,7 +242,7 @@ end
 
 
 function switch_gps2encpb(state)
-  if icao == "B407" then
+  if icao == "B407" or icao == "206B3" then
     command = "RXP/GTN/FMS_PUSH_2"
   else
     command = ""
@@ -710,7 +710,7 @@ function cb_igntr(state)
     xpl_dataref_write(dataref, "FLOAT", output, 0)
   else
     dataref = "sim/operation/failures/rel_ignitr0"
-    output = state * 6
+    output = (1 - state) * 6
     xpl_dataref_write(dataref, "INT", output, 0)
   end
 
