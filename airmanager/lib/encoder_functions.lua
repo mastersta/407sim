@@ -47,13 +47,13 @@ function gps1_outer(direction)
     end
     
   elseif icao == "206L3" then
-    if direction == -1 then   xpl_command("RXP/GTN/FMS_INNER_CW_1")
-    else                      xpl_command("RXP/GTN/FMS_INNER_CCW_1")
+    if direction == -1 then   xpl_command("RXP/GTN/FMS_OUTER_CW_1")
+    else                      xpl_command("RXP/GTN/FMS_OUTER_CCW_1")
     end
     
   else
-    if direction == -1 then   xpl_command("RXP/GTN/FMS_INNER_CW_2")
-    else                      xpl_command("RXP/GTN/FMS_INNER_CCW_2")
+    if direction == -1 then   xpl_command("RXP/GTN/FMS_OUTER_CW_2")
+    else                      xpl_command("RXP/GTN/FMS_OUTER_CCW_2")
     end
     
   end
@@ -65,7 +65,7 @@ dial_gps1_outer = hw_dial_add("GPS1 OUTER", encoder_type, 1, gps1_outer)
 function gps1_vol(direction)
   print("gps1_vol  " .. direction)
   
-  if direction == -1 then     xpl_command("RXP/GTN/VOL_CW_1")
+  if direction == 1 then      xpl_command("RXP/GTN/VOL_CW_1")
   else                        xpl_command("RXP/GTN/VOL_CCW_1")
   end
 end
@@ -153,8 +153,16 @@ dial_alt_adj = hw_dial_add("ALT ADJ", encoder_type, 1, alt_adj)
 
 function hdg_bug(direction)
   print("hdg  " .. direction)
-  if direction == 1 then     xpl_command("sim/autopilot/heading_up")
-  else                       xpl_command("sim/autopilot/heading_down")
+  
+  if icao == "206L3" then
+    if direction == 1 then   xpl_command("sim/radios/obs1_up")
+    else                     xpl_command("sim/radios/obs1_down")
+    end
+  
+  else
+    if direction == 1 then     xpl_command("sim/autopilot/heading_up")
+    else                       xpl_command("sim/autopilot/heading_down")
+    end
   end
 end
 
@@ -175,8 +183,8 @@ function obs_adj(direction)
     end
     
   elseif icao == "206L3" then
-    if direction == 1 then   xpl_command("sim/instruments/DG_sync_up")
-    else                     xpl_command("sim/instruments/DG_sync_down")
+    if direction == 1 then   xpl_command("sim/radios/obs1_up")
+    else                     xpl_command("sim/radios/obs1_down")
     end
     
   else

@@ -60,6 +60,8 @@ function switch_fuelvalve(state)
     command1 = "sim/fuel/fuel_selector_none"
     toggle_command(command0, command1, state)
   end
+  
+  fs2020_event("FUELSYSTEM_VALVE_SET", 1, 1 - state)
 end
 
 
@@ -259,6 +261,7 @@ function switch_battery(state)
   command1 = "sim/electrical/battery_1_off"
 
   toggle_command(command0, command1, state)
+  fs2020_event("MASTER_BATTERY_SET", 1 - state)
 end
 
 
@@ -267,6 +270,7 @@ function switch_generator(state)
   command1 = "sim/electrical/generator_1_off"
 
   toggle_command(command0, command1, state)
+  fs2020_event("ALTERNATOR_SET", 1 - state) --not working
 end
 
 
@@ -293,6 +297,7 @@ function switch_anticollisionlight(state)
   end
 
   toggle_command(command0, command1, state)
+  fs2020_event("BEACON_LIGHTS_SET", 1 - state)
 end
 
 
@@ -312,6 +317,8 @@ function switch_hydraulics(state)
     command1 = "sim/electrical/generator_1_off"
     toggle_command(command0, command1, state)
   end
+  
+  --fs2020_event("HYDRAULIC_SWITCH_TOGGLE", 1 - state) --toggle means it's borked
 end
 
 
@@ -325,6 +332,7 @@ function switch_avionicsmaster(state)
   end
 
   toggle_command(command0, command1, state)
+  fs2020_event("AVIONICS_MASTER_SET", 1 - state)
 end
 
 
@@ -338,6 +346,7 @@ function switch_engineantiice(state)
   end
 
   toggle_command(command0, command1, state)
+  fs2020_event("ANTI_ICE_SET", 1 - state)
 end
 
 
@@ -346,6 +355,7 @@ function switch_pitotheater(state)
   command1 = "sim/ice/pitot_heat0_off"
 
   toggle_command(command0, command1, state)
+  fs2020_event("PITOT_HEAT_SET", 1 - state)
 end
 
 
@@ -360,6 +370,7 @@ function switch_positionlight(state)
   end
 
   toggle_command(command0, command1, state)
+  fs2020_event("NAV_LIGHTS_SET", 1 - state)
 end
 
 
@@ -394,6 +405,8 @@ function switch_fuelpumpleft(state)
     command1 = "sim/fuel/left_xfr_off"
     toggle_command(command0, command1, state)
   end
+  
+  fs2020_event("FUELSYSTEM_PUMP_SET", 1, 1 - state)
 end
 
 
@@ -422,6 +435,8 @@ function switch_fuelpumpright(state)
     command1 = "sim/fuel/right_xfr_off"
     toggle_command(command0, command1, state)
   end
+  
+  fs2020_event("FUELSYSTEM_PUMP_SET", 2, 1 - state)
 end
 
 

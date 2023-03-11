@@ -584,7 +584,7 @@ end
 annun_reset = true
 function check_xpl_connection()
 
-  if not xpl_connected() then
+  if not xpl_connected() and not fs2020_connected() then
 
     if hw_connected("ARDUINO_LEONARDO_A") then
       hw_message_port_send(hw_id, 0, "INT[4]", standby_payload)
