@@ -3,11 +3,18 @@
 timer_delay = 10
  
 icao = "" --initialize aircraft icao
-function update_icao(input)
+function update_icao(input, author)
   icao = input
+  
+  if author == "JRX Design Studio" then
+    icao = "J407"
+    print(icao)
+  end
 end
 xpl_dataref_subscribe(
-  "sim/aircraft/view/acf_ICAO", "STRING", update_icao)
+  "sim/aircraft/view/acf_ICAO", "STRING",
+  "sim/aircraft/view/acf_author", "STRING",
+  update_icao)
 
 function don_headset(input)
   don_headset = booltonum(input[1] > 40)

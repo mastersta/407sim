@@ -56,7 +56,8 @@ function switch_fuelvalve(state)
     dataref = "206L3/fuel/valve"
     xpl_dataref_write(dataref, "FLOAT", output, 0)
   elseif icao == "J407" then
-    output = 1 - state
+    output = state
+    xpl_dataref_write("jrxDR/407/panels/switches/fuel_valve_cover", "INT", state, 0)
     dataref = "sim/cockpit2/fuel/firewall_closed_left"
     xpl_dataref_write(dataref, "INT", output, 0)
   else
@@ -411,7 +412,7 @@ function switch_fuelpumpleft(state)
   elseif icao == "J407" then
     output = 1 - state
     dataref = "sim/cockpit2/engine/actuators/fuel_pump_on"
-    xpl_dataref_write(dataref, "INT", output, 0)
+    xpl_dataref_write(dataref, "INT[16]", output, 0)
   else
     command0 = "sim/fuel/fuel_tank_pump_1_on"
     command1 = "sim/fuel/fuel_tank_pump_1_off"
@@ -443,7 +444,7 @@ function switch_fuelpumpright(state)
   elseif icao == "J407" then
     output = 1 - state
     dataref = "sim/cockpit2/engine/actuators/fuel_pump_on"
-    xpl_dataref_write(dataref, "INT", output, 1)
+    xpl_dataref_write(dataref, "INT[16]", output, 1)
   else
     command0 = "sim/fuel/fuel_tank_pump_2_on"
     command1 = "sim/fuel/fuel_tank_pump_2_off"
