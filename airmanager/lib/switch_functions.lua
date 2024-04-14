@@ -55,6 +55,10 @@ function switch_fuelvalve(state)
     output = 1 - state
     dataref = "206L3/fuel/valve"
     xpl_dataref_write(dataref, "FLOAT", output, 0)
+  elseif icao == "J407" then
+    output = 1 - state
+    dataref = "sim/cockpit2/fuel/firewall_closed_left"
+    xpl_dataref_write(dataref, "INT", output, 0)
   else
     command0 = "sim/fuel/fuel_selector_all"
     command1 = "sim/fuel/fuel_selector_none"
@@ -82,6 +86,8 @@ function switch_hornmute(state)
     command = "206L3/Buttons/mutehorn_cmd"
   elseif icao == "B407" then
     command = "B407/horn_mute"
+  elseif icao == "J407" then
+    command = "407/Switches/Controls/horn_mute"
   else
     command = ""
   end
@@ -94,6 +100,10 @@ end
 function switch_instrumentcheck(state)
   if icao == "B407" then
     command = "B407/instr_check"
+  elseif icao == "J407" then
+    output = 1 - state
+    dataref = "jrxDR/407/panels/switches/instr_check"
+    xpl_dataref_write(dataref, "INT", output, 0)
   else
     command = ""
   end
@@ -105,6 +115,10 @@ end
 function switch_lcdtest(state)
   if icao == "B407" then
     command = "B407/lcd_test"
+  elseif icao == "J407" then
+    output = 1 - state
+    dataref = "jrxDR/407/panels/switches/lcd_test_button"
+    xpl_dataref_write(dataref, "INT", output, 0)
   else
     command = ""
   end
@@ -116,6 +130,10 @@ end
 function switch_fuelquantity(state)
   if icao == "B407" then
     command = "B407/fuelqty"
+  elseif icao == "J407" then
+    output = 1 - state
+    dataref = "jrxDR/407/engine/show_fwd_total_fuel"
+    xpl_dataref_write(dataref, "INT", output, 0)
   else
     command = ""
   end
@@ -127,6 +145,10 @@ end
 function switch_fadechorntest(state)
   if icao == "B407" then
     command = "B407/fadec_horn"
+  elseif icao == "J407" then
+    output = 1 - state
+    dataref = "jrxDR/407/panels/switches/horn_test"
+    xpl_dataref_write(dataref, "INT", output, 0)
   else
     command = ""
   end
@@ -308,9 +330,9 @@ function switch_hydraulics(state)
     dataref = "206L3/hydraulics/onoff"
     xpl_dataref_write(dataref, "INT", 1 - state, 0)
   else
-    command0 = "sim/electrical/generator_1_on"
-    command1 = "sim/electrical/generator_1_off"
-    toggle_command(command0, command1, state)
+    output = 1 - state
+    dataref = "sim/cockpit2/hydraulics/actuators/electric_hydraulic_pump_on"
+    xpl_dataref_write(dataref, "INT", output, 0)
   end
 end
 
@@ -386,6 +408,10 @@ function switch_fuelpumpleft(state)
     command0 = "sim/fuel/fuel_pump_1_on"
     command1 = "sim/fuel/fuel_pump_1_off"
     toggle_command(command0, command1, state)
+  elseif icao == "J407" then
+    output = 1 - state
+    dataref = "sim/cockpit2/engine/actuators/fuel_pump_on"
+    xpl_dataref_write(dataref, "INT", output, 0)
   else
     command0 = "sim/fuel/fuel_tank_pump_1_on"
     command1 = "sim/fuel/fuel_tank_pump_1_off"
@@ -414,6 +440,10 @@ function switch_fuelpumpright(state)
     command0 = "sim/fuel/fuel_pump_2_on"
     command1 = "sim/fuel/fuel_pump_2_off"
     toggle_command(command0, command1, state)
+  elseif icao == "J407" then
+    output = 1 - state
+    dataref = "sim/cockpit2/engine/actuators/fuel_pump_on"
+    xpl_dataref_write(dataref, "INT", output, 1)
   else
     command0 = "sim/fuel/fuel_tank_pump_2_on"
     command1 = "sim/fuel/fuel_tank_pump_2_off"
@@ -447,6 +477,10 @@ function switch_instrumentatt(state)
     command0 = "B407/overhead/on/flightinstr_att"
     command1 = "B407/overhead/off/flightinstr_att"
     toggle_command(command0, command1, state)
+  elseif icao == "J407" then
+    output = 1 - state
+    dataref = "jrxDR/407/overhead/switches/att_gyro_power"
+    xpl_dataref_write(dataref, "INT", output, 0)
   else
     dataref = "sim/operation/failures/rel_ss_ahz"
     output = state * 6
