@@ -127,7 +127,7 @@ xpl_dataref_subscribe(
 )
 
 function af_lfuel_boost(input1, input2, input3)
-  if icao == "B407" then
+  if icao == "B407" or icao == "J407" then
     output = booltonum(input1[1] == 0)
   elseif icao == "206B3" then
     output = input2
@@ -163,7 +163,7 @@ xpl_dataref_subscribe(
 )
 
 function af_rfuel_boost(input1, input2, input3)
-  if icao == "B407" then
+  if icao == "B407" or icao == "J407" then
     output = booltonum(input1[2] == 0)
   elseif icao == "206B3" then
     output = input2
@@ -239,8 +239,14 @@ xpl_dataref_subscribe(
   af_fadec_fail
 )
 
+lowfps_counter = 0
 function af_fadec_degraded(input)
-  output = booltonum(input > 0.05)
+  if input > 0.05 then
+    lowfps_counter = lowfps_counter + 1
+  else
+    lowfps_counter = 0
+  end
+  output = booltonum(lowfps_counter > 20)
   annunciator_write(2, 4, output)
 end
 xpl_dataref_subscribe(

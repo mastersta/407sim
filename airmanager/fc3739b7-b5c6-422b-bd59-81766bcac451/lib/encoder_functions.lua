@@ -7,7 +7,7 @@ icao = ""
 function gps1_inner(direction)
   print("gps1_inner  " .. direction)
   
-  if icao == "B407" then
+  if icao == "B407" or icao == "J407" then
     if direction == 1 then    xpl_command("RXP/GTN/FMS_INNER_CW_1")
     else                      xpl_command("RXP/GTN/FMS_INNER_CCW_1")
     end
@@ -36,7 +36,7 @@ dial_gps1_inner = hw_dial_add("GPS1 INNER", encoder_type, 1, gps1_inner)
 function gps1_outer(direction)
   print("gps1_outer  " .. direction)
   
-  if icao == "B407" then
+  if icao == "B407" or icao == "J407" then
     if direction == -1 then   xpl_command("RXP/GTN/FMS_OUTER_CW_1")
     else                      xpl_command("RXP/GTN/FMS_OUTER_CCW_1")
     end
@@ -76,7 +76,7 @@ dial_gps1_vol = hw_dial_add("GPS1 VOL", encoder_type, 4, gps1_vol)
 function gps2_inner(direction)
   print("gps2_inner  " .. direction)
   
-  if icao == "B407" then
+  if icao == "B407" or icao == "J407" then
     if direction == -1 then   xpl_command("RXP/GTN/FMS_INNER_CW_2")
     else                      xpl_command("RXP/GTN/FMS_INNER_CCW_2")
     end
@@ -105,7 +105,7 @@ dial_gps2_inner = hw_dial_add("GPS2 INNER", encoder_type, 1, gps2_inner)
 function gps2_outer(direction)
   print("gps2_outer  " .. direction)
   
-  if icao == "B407" then
+  if icao == "B407" or icao == "J407" then
     if direction == 1 then   xpl_command("RXP/GTN/FMS_OUTER_CW_2")
     else                     xpl_command("RXP/GTN/FMS_OUTER_CCW_2")
     end
@@ -172,7 +172,7 @@ dial_hdg_bug = hw_dial_add("HDG BUG", encoder_type, 2, hdg_bug)
 function obs_adj(direction)
   print("obs  " .. direction)
 
-  if icao == "B407" then
+  if icao == "B407" or icao == "J407" then
     if direction == 1 then   xpl_command("sim/radios/obs1_up")
     else                     xpl_command("sim/radios/obs1_down")
     end

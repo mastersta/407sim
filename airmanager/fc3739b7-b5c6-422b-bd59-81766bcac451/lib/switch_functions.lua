@@ -56,7 +56,8 @@ function switch_fuelvalve(state)
     dataref = "206L3/fuel/valve"
     xpl_dataref_write(dataref, "FLOAT", output, 0)
   elseif icao == "J407" then
-    output = 1 - state
+    output = state
+    xpl_dataref_write("jrxDR/407/panels/switches/fuel_valve_cover", "INT", state, 0)
     dataref = "sim/cockpit2/fuel/firewall_closed_left"
     xpl_dataref_write(dataref, "INT", output, 0)
   else
@@ -422,7 +423,7 @@ function switch_fuelpumpleft(state)
   elseif icao == "J407" then
     output = 1 - state
     dataref = "sim/cockpit2/engine/actuators/fuel_pump_on"
-    xpl_dataref_write(dataref, "INT", output, 0)
+    xpl_dataref_write(dataref, "INT[16]", output, 0)
   else
     command0 = "sim/fuel/fuel_tank_pump_1_on"
     command1 = "sim/fuel/fuel_tank_pump_1_off"
@@ -456,7 +457,7 @@ function switch_fuelpumpright(state)
   elseif icao == "J407" then
     output = 1 - state
     dataref = "sim/cockpit2/engine/actuators/fuel_pump_on"
-    xpl_dataref_write(dataref, "INT", output, 1)
+    xpl_dataref_write(dataref, "INT[16]", output, 1)
   else
     command0 = "sim/fuel/fuel_tank_pump_2_on"
     command1 = "sim/fuel/fuel_tank_pump_2_off"
@@ -484,6 +485,9 @@ function switch_instrumentdg(state)
 
   print("sw dg")
   xpl_dataref_write(dataref, "INT", output, 0)
+  
+  --test this! Fail the gyros with the switch
+  xpl_dataref_write("sim/operation/failures/rel_elec_gyr", "INT", (1 - state) * 6, 0)
 end
 
 
@@ -812,8 +816,9 @@ function cb_ldglightspwr(state)
     dataref = "sim/operation/failures/rel_lites_land"
     output = state * 6
     xpl_dataref_write(dataref, "INT", output, 0)
-    dataref = "sim/operation/failures/rel_lites_taxi"
-    output = state * 6
+    dataref = "sim/operation/failures/rel_lites_land"
+    output = (1 - state) * 6
+    print("ll pwr: " .. output)
     xpl_dataref_write(dataref, "INT", output, 0)
   end
 
@@ -826,6 +831,10 @@ function cb_ldglightscont(state)
     dataref = "B407/CircuitBreaker/LIGHT_CONT"
     output = state
     xpl_dataref_write(dataref, "FLOAT", output, 0)
+  elseif icao == "J407" then
+    dataref = "jrxDR/407/lighting/exterior/pulse_lights_switch"
+    output = 1 - state
+    xpl_dataref_write(dataref, "INT", output, 0)
   else
     --TODO: implement timer based landing light flash
   end
