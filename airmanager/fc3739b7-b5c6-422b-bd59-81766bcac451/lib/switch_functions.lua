@@ -480,14 +480,15 @@ function switch_instrumentdg(state)
     output = 1 - state
   else
     dataref = "sim/operation/failures/rel_ss_dgy"
-    output = state * 6
+    output = (state) * 6
+    print(output)
   end
 
   print("sw dg")
   xpl_dataref_write(dataref, "INT", output, 0)
   
   --test this! Fail the gyros with the switch
-  xpl_dataref_write("sim/operation/failures/rel_elec_gyr", "INT", (1 - state) * 6, 0)
+  --xpl_dataref_write("sim/operation/failures/rel_elec_gyr", "INT", (1 - state) * 6, 0)
 end
 
 
@@ -499,6 +500,9 @@ function switch_instrumentatt(state)
   elseif icao == "J407" then
     output = 1 - state
     dataref = "jrxDR/407/overhead/switches/att_gyro_power"
+    xpl_dataref_write(dataref, "INT", output, 0)
+    dataref = "sim/operation/failures/rel_ss_ahz"
+    output = state * 6
     xpl_dataref_write(dataref, "INT", output, 0)
   else
     dataref = "sim/operation/failures/rel_ss_ahz"

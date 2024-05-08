@@ -126,16 +126,19 @@ xpl_dataref_subscribe(
   af_heater_overtemp
 )
 
-function af_lfuel_boost(input1, input2, input3)
-  if icao == "B407" or icao == "J407" then
+function af_lfuel_boost(input1, input2, input3, input4)
+  if icao == "B407" then
     output = booltonum(input1[1] == 0)
   elseif icao == "206B3" then
     output = input2
   elseif icao == "206L3" then
     output = input3
+  elseif icao == "J407" then
+    output = 1 - input4[1]
   else
     output = booltonum(input1[1] == 0)
   end
+  print("lfuel: " .. output)
   annunciator_write(1, 10, output)
   annunciator_write(1, 11, output)
 end
@@ -143,6 +146,7 @@ xpl_dataref_subscribe(
   "sim/cockpit2/fuel/fuel_tank_pump_on",            "INT[8]",  
   "206B3/fuel/boost/aft/br",                        "INT",
   "206L3/fuel/boost/aft/br",                        "INT",
+  "sim/cockpit/engine/fuel_pump_on",                "INT[16]",
   af_lfuel_boost
 )
 
@@ -162,23 +166,27 @@ xpl_dataref_subscribe(
   af_fuel_filter
 )
 
-function af_rfuel_boost(input1, input2, input3)
-  if icao == "B407" or icao == "J407" then
+function af_rfuel_boost(input1, input2, input3, input4)
+  if icao == "B407" then
     output = booltonum(input1[2] == 0)
   elseif icao == "206B3" then
     output = input2
   elseif icao == "206L3" then
     output = input3
+  elseif icao == "J407" then
+    output = 1 - input4[2]
   else
     output = booltonum(input1[2] == 0)
   end
+  print("rfuel: " .. output)
   annunciator_write(1, 13, output)
   annunciator_write(1, 14, output)
 end
 xpl_dataref_subscribe(
   "sim/cockpit2/fuel/fuel_tank_pump_on",            "INT[8]",  
   "206B3/fuel/boost/fwd/br",                        "INT",  
-  "206L3/fuel/boost/fwd/br",                        "INT",  
+  "206L3/fuel/boost/fwd/br",                        "INT",
+  "sim/cockpit/engine/fuel_pump_on",                "INT[16]",  
   af_rfuel_boost
 )
 
@@ -187,13 +195,15 @@ function af_rfuel_xfer(input)
   --possibly sim/cockpit2/fuel_transfer[2]?
 end
 
-function af_fuel_valve(input1, input2, input3, input4)
+function af_fuel_valve(input1, input2, input3, input4, input5)
   if icao == "B407" then
     output = input1
   elseif icao == "206B3" then
     output = 1 - input2
   elseif icao == "206L3" then
     output = 1 - input3
+  elseif icao == "J407" then
+    output = input5
   else
     output = booltonum(input4 == 0)
   end
@@ -204,6 +214,7 @@ xpl_dataref_subscribe(
   "206B3/fuel/valve",                               "FLOAT",  
   "206L3/fuel/valve",                               "FLOAT",  
   "sim/cockpit2/fuel/fuel_tank_selector",           "INT",
+  "sim/cockpit2/fuel/firewall_closed_left",         "INT",
   af_fuel_valve
 )
 
